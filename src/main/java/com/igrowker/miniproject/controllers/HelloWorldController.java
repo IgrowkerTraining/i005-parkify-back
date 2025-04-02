@@ -1,4 +1,4 @@
-package com.igrowker.miniproject.rest;
+package com.igrowker.miniproject.controllers;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
