@@ -1,4 +1,8 @@
 package com.igrowker.feature.parkify.features.auth.service;
 
-public class AuthService {
+
+import com.igrowker.feature.parkify.features.auth.dto.request.LoginRequest;
+
+public interface AuthService {
+    String login(LoginRequest request);
 }

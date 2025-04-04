@@ -1,4 +1,5 @@
 package com.igrowker.feature.parkify.features.auth.entities;
 
-public class User {
+public enum Role {
+    OWNER
 }
