@@ -26,6 +26,7 @@ public class JwtService {
     private final JwtProperties jwtProperties;
     private Key signInKey;
 
+
     @PostConstruct
     public void init() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecret());

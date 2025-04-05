@@ -1,7 +1,9 @@
 package com.igrowker.feature.parkify.features.auth.controller;
 
 import com.igrowker.feature.parkify.features.auth.dto.request.LoginRequest;
+import com.igrowker.feature.parkify.features.auth.dto.request.RegisterRequest;
 import com.igrowker.feature.parkify.features.auth.dto.response.LoginResponse;
+import com.igrowker.feature.parkify.features.auth.dto.response.RegisterResponse;
 import com.igrowker.feature.parkify.features.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,5 +25,10 @@ public class AuthController {
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         final String token = authService.login(request);
         return ResponseEntity.ok(new LoginResponse(token));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request){
+        return ResponseEntity.ok(authService.register(request));
     }
 }
