@@ -1,21 +1,44 @@
 version: '3.8'
 
 services:
+  # Servicio para la aplicación Spring Boot
+  app:
+    build: .
+    container_name: spring_boot_app
+    ports:
+      - "8080:8080"  # Mapeamos el puerto 8080
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_db:3306/db_parkify
+      SPRING_DATASOURCE_USERNAME: parkify
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update  # Configuración de JPA para actualizar la base de datos
+    depends_on:
+      - mysql_db  # Aseguramos que MySQL se inicie primero
+    networks:
+      - app-network
+
+  # Servicio para la base de datos MySQL
   mysql_db:
     image: mysql:8.0
-    container_name: parkify_db_container
+    container_name: mysql_db
     restart: always
     environment:
-      MYSQL_DATABASE: db_parkify
-      MYSQL_USER: parkify
-      MYSQL_PASSWORD: 1234
-      MYSQL_ROOT_PASSWORD: root_password_123
-
+      MYSQL_ROOT_PASSWORD: root_password_123  # Contraseña del root de MySQL
+      MYSQL_DATABASE: db_parkify  # Nombre de la base de datos
+      MYSQL_USER: parkify  # Usuario de la base de datos
+      MYSQL_PASSWORD: 1234  # Contraseña para el usuario de la base de datos
     ports:
-      - "3306:3306"
-
+      - "3306:3306"  # Mapeamos el puerto 3306 de MySQL
+    networks:
+      - app-network
     volumes:
-      - parkify_mysql_data:/var/lib/mysql
+      - parkify_mysql_data:/var/lib/mysql  # Volumen persistente para la base de datos
 
+# Volúmenes persistentes
 volumes:
   parkify_mysql_data:
+
+# Definimos una red para que los contenedores puedan comunicarse entre sí
+networks:
+  app-network:
+    driver: bridge
