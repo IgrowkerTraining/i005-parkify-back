@@ -2,13 +2,13 @@ package com.igrowker.feature.parkify.features.user.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
+@Getter
 @Entity
-@Table(name = "users")
+@Table(name = "users") // Puedes personalizar el nombre de la tabla si lo deseas
 public class User {
 
+    // Getters y setters
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,7 +20,28 @@ public class User {
 
     private String password;
 
-    private String role; // puede ser "driver", "admin", etc.
+    private String role;
 
-    // Getters y setters
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+
 }
+

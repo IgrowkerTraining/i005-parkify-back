@@ -6,19 +6,24 @@ import com.igrowker.feature.parkify.features.user.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-public class AuthService {
+@Service
+public class UserService {
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    private PasswordEncoder passwordEncoder;
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public void register(RegisterRequest request) {
         if (!"driver".equalsIgnoreCase(request.getRole())) {
-            throw new IllegalArgumentException("El rol debe ser 'driver'.");
+            throw new IllegalArgumentException("Rol must be 'driver'.");
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("El email ya está registrado.");
+            throw new IllegalArgumentException("Email is already registered.");
         }
 
         User user = new User();
