@@ -14,4 +14,15 @@ public class Parking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private String nombre;
+    private String direccion;
+    private Double latitud;
+    private Double longitud;
+    private Double tarifaHora;
+    private Boolean disponible;
+    private String whatsapp;
+
+    @Column(name = "owner_id")
+    private Long ownerId;
 }
