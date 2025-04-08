@@ -25,7 +25,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Testcontainers
 @TestPropertySource(properties = {
-        "jwt.secret=TXlUZXN0U2VjcmV0S2V5VGhhdElzTG9uZ0Vub3VnaDEyMw=="
+        "jwt.secret=TXlUZXN0U2VjcmV0S2V5VGhhdElzTG9uZ0Vub3VnaDEyMw==",
+        "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 @Sql(statements = {
         "DELETE FROM users WHERE email = 'test.owner.it@example.com';",

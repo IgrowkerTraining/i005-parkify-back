@@ -16,6 +16,8 @@ services:
       - mysql_db  # Aseguramos que MySQL se inicie primero
     networks:
       - app-network
+    profiles:
+      - app
 
   # Servicio para la base de datos MySQL
   mysql_db:
