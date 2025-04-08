@@ -1,6 +1,7 @@
 package com.igrowker.feature.parkify.features.content.controller;
 
 import com.igrowker.feature.parkify.features.content.dto.FooterContentResponse;
+import com.igrowker.feature.parkify.features.content.dto.HomeContentResponse;
 import com.igrowker.feature.parkify.features.content.service.ContentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,4 +21,11 @@ public class ContentController {
         final FooterContentResponse footerData = contentService.getFooterData();
         return ResponseEntity.ok(footerData);
     }
+
+    @GetMapping("/home")
+    public ResponseEntity<HomeContentResponse> getHomeContent() {
+        final HomeContentResponse homeData = contentService.getHomeData();
+        return ResponseEntity.ok(homeData);
+    }
+
 }
