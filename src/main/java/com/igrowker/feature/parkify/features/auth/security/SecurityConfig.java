@@ -29,18 +29,26 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/auth/**",
-                                "/hello",
+                                "/api/v1/auth/**",
                                 "/api/v1/content/**",
-                                "/api/v1/config/**"
+                                "/api/v1/config/initial"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/parkings/**").permitAll()
-                        .requestMatchers("/api/owner/**").hasRole("OWNER")
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/parkings/**"
+                        ).authenticated()
+                        .requestMatchers(HttpMethod.PUT,
+                                "/api/v1/parkings/my/availability"
+                        ).hasRole("OWNER")
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/parkings/my"
+                        ).hasRole("OWNER")
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Используем stateless сессии (для JWT)
+                .sessionManagement(session
+                        -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS
+                ))
                 .userDetailsService(userDetailsService)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // Добавляем JWT фильтр - РАСКОММЕНТИРОВАТЬ ПОЗЖЕ
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

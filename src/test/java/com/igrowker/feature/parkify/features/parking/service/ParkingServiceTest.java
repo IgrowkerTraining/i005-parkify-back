@@ -21,7 +21,7 @@ class ParkingServiceTest {
     private ParkingRepository parkingRepository;
 
     @InjectMocks
-    private ParkingService parkingService;
+    private ParkingServiceImpl parkingService;
 
     @Test
     void createParking_ShouldSaveAndReturnParkingResponse() {

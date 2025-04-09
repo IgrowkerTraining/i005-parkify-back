@@ -17,8 +17,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.utility.DockerImageName;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -61,7 +61,7 @@ class AuthControllerWebLayerTest {
     void login_ValidCredentials_ShouldReturnOkAndToken() throws Exception {
         when(authService.login(any(LoginRequest.class))).thenReturn(testToken);
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -71,14 +71,14 @@ class AuthControllerWebLayerTest {
     }
 
     @Test
-    void login_InvalidCredentials_ShouldReturnForbidden() throws Exception {
+    void login_InvalidCredentials_ShouldReturnUnauthorized() throws Exception {
         when(authService.login(any(LoginRequest.class)))
                 .thenThrow(new BadCredentialsException("Invalid credentials provided"));
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
         verify(authService, times(1)).login(loginRequest);
     }
 
@@ -87,7 +87,7 @@ class AuthControllerWebLayerTest {
         final LoginRequest invalidRequest = new LoginRequest();
         invalidRequest.setPassword("password");
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
@@ -98,7 +98,7 @@ class AuthControllerWebLayerTest {
         final LoginRequest invalidRequest = new LoginRequest();
         invalidRequest.setEmail("test@example.com");
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());

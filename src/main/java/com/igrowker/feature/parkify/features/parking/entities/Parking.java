@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name="parking")
+@Table(name="parkings")
 public class Parking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,6 +25,6 @@ public class Parking {
 
     @Column(name = "owner_id")
     private Long ownerId;
-
+    @Column(name = "available_spots")
     private Integer availableSpots;
 }

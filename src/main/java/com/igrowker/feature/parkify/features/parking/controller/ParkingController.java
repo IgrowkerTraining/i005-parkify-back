@@ -2,17 +2,30 @@ package com.igrowker.feature.parkify.features.parking.controller;
 
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
 import com.igrowker.feature.parkify.features.parking.service.ParkingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "")
 @RestController
-@RequestMapping("/api/parkings")
+@RequestMapping("/api/v1/parkings")
 @RequiredArgsConstructor
 public class ParkingController {
     private final ParkingService parkingService;
+
+    @GetMapping("/{parkingId}/availability")
+    public ResponseEntity<ParkingAvailabilityResponse> getParkingAvailability
+            (@PathVariable Long parkingId
+            ) {
+        ParkingAvailabilityResponse response = parkingService.getParkingAvailability(parkingId);
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/create")
     public ResponseEntity<ParkingResponse> createParking(@RequestBody ParkingRequest request) {

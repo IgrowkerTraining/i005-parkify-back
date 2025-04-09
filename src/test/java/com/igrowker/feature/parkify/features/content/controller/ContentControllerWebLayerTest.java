@@ -22,7 +22,9 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ContentController.class)
 @Import({SecurityConfig.class, JwtService.class})
@@ -59,13 +61,20 @@ class ContentControllerWebLayerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.aboutUsLink", is(expectedFooterResponse.getAboutUsLink())))
-                .andExpect(jsonPath("$.contactLink", is(expectedFooterResponse.getContactLink())))
-                .andExpect(jsonPath("$.socialLinks", hasSize(2)))
-                .andExpect(jsonPath("$.socialLinks[0].platform", is("x-twitter")))
-                .andExpect(jsonPath("$.socialLinks[0].url", is("https://mock.x.com")))
-                .andExpect(jsonPath("$.socialLinks[1].platform", is("linkedin")))
-                .andExpect(jsonPath("$.socialLinks[1].url", is("https://mock.linkedin.com")));
+                .andExpect(jsonPath("$.aboutUsLink",
+                        is(expectedFooterResponse.getAboutUsLink())))
+                .andExpect(jsonPath("$.contactLink",
+                        is(expectedFooterResponse.getContactLink())))
+                .andExpect(jsonPath("$.socialLinks",
+                        hasSize(2)))
+                .andExpect(jsonPath("$.socialLinks[0].platform",
+                        is("x-twitter")))
+                .andExpect(jsonPath("$.socialLinks[0].url",
+                        is("https://mock.x.com")))
+                .andExpect(jsonPath("$.socialLinks[1].platform",
+                        is("linkedin")))
+                .andExpect(jsonPath("$.socialLinks[1].url",
+                        is("https://mock.linkedin.com")));
     }
 
 }

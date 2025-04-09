@@ -64,7 +64,7 @@ class AuthControllerIT {
 
     @Test
     void login_ValidCredentials_ShouldReturnOkAndToken() throws Exception {
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
@@ -73,23 +73,23 @@ class AuthControllerIT {
     }
 
     @Test
-    void login_InvalidCredentials_ShouldReturnForbidden() throws Exception { // 401 для неверных данных
+    void login_InvalidCredentials_ShouldReturnUnauthorized() throws Exception { // 401 для неверных данных
         loginRequest.setPassword("wrongpassword");
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void login_UserNotFound_ShouldReturnForbidden() throws Exception {
+    void login_UserNotFound_ShouldReturnUnauthorized() throws Exception {
         loginRequest.setEmail("nonexistent.user@example.com");
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
 
@@ -98,7 +98,7 @@ class AuthControllerIT {
         final LoginRequest invalidRequest = new LoginRequest();
         invalidRequest.setPassword("password");
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
@@ -109,7 +109,7 @@ class AuthControllerIT {
         final LoginRequest invalidRequest = new LoginRequest();
         invalidRequest.setEmail("test.owner.it@example.com");
 
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
