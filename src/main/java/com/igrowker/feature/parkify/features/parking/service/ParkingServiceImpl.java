@@ -119,12 +119,13 @@ public class ParkingServiceImpl implements ParkingService {
     }
 
     private ParkingResponse mapToFlatParkingResponse(Parking parking, AuthUser owner) {
-        final List<String> featureList = !StringUtils.hasText(parking.getFeatures())
-                ? Collections.emptyList()
-                : Arrays.stream(parking.getFeatures().split(","))
-                    .map(String::trim)
-                    .filter(StringUtils::hasText)
-                    .toList();
+        final List<String> featureList = Optional.ofNullable(parking.getFeatures())
+                .filter(StringUtils::hasText) // Убедимся, что строка не пустая
+                .map(f -> Arrays.stream(f.split(","))
+                        .map(String::trim)
+                        .filter(StringUtils::hasText)
+                        .toList())
+                .orElse(Collections.emptyList());
         return ParkingResponse.builder()
                 .id(parking.getId())
                 .name(parking.getName())

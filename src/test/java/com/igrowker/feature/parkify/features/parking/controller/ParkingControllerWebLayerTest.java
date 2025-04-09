@@ -323,7 +323,7 @@ class ParkingControllerWebLayerTest {
 
             verify(parkingService, never()).createMyParking(any(), any());
         }
-        
+
         @Test
         @DisplayName("should return 404 Not Found when authenticated OWNER is not found in DB")
         @WithMockUser(username = UNKNOWN_OWNER_EMAIL, roles = {"OWNER"})
