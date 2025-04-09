@@ -1,6 +1,7 @@
 package com.igrowker.feature.parkify.features.parking.service;
 
 import com.igrowker.feature.parkify.exception.ParkingNotFoundException;
+import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
@@ -20,6 +21,7 @@ public interface ParkingService {
      * @throws ParkingNotFoundException if no parking is found with the given ID.
      */
     ParkingResponse getParkingDetails(Long parkingId);
+    ParkingResponse createMyParking(CreateMyParkingRequest request, String ownerEmail);
 }
 
 

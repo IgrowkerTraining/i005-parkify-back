@@ -1,16 +1,26 @@
 package com.igrowker.feature.parkify.features.parking.controller;
 
+import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
-import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
 import com.igrowker.feature.parkify.features.parking.service.ParkingService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @CrossOrigin(origins = "")
 @RestController
@@ -43,6 +53,22 @@ public class ParkingController {
     public ResponseEntity<ParkingResponse> getParkingDetails(@PathVariable Long parkingId) {
         ParkingResponse response = parkingService.getParkingDetails(parkingId);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/my")
+    public ResponseEntity<ParkingResponse> createMyParking(
+            @Valid @RequestBody CreateMyParkingRequest request,
+            Authentication authentication
+    ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        final String ownerEmail = authentication.getName();
+        final ParkingResponse createdParking = parkingService.createMyParking(request, ownerEmail);
+        final URI location = ServletUriComponentsBuilder
+                .fromCurrentContextPath().path("/api/v1/parkings/{id}")
+                .buildAndExpand(createdParking.getId()).toUri();
+        return ResponseEntity.created(location).body(createdParking); // Возвращаем 201 Created
     }
 
 }

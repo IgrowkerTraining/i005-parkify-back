@@ -4,6 +4,7 @@ import com.igrowker.feature.parkify.exception.OwnerNotFoundException;
 import com.igrowker.feature.parkify.exception.ParkingNotFoundException;
 import com.igrowker.feature.parkify.features.auth.entities.AuthUser;
 import com.igrowker.feature.parkify.features.auth.repository.AuthUserRepository;
+import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
@@ -91,6 +92,30 @@ public class ParkingServiceImpl implements ParkingService {
                                 + parkingId
                 ));
         return mapToFlatParkingResponse(parking, owner);
+    }
+
+    @Override
+    @Transactional // Важно для консистентности
+    public ParkingResponse createMyParking(CreateMyParkingRequest request, String ownerEmail) {
+        final AuthUser owner = authUserRepository.findByEmail(ownerEmail)
+                .orElseThrow(() -> new OwnerNotFoundException(
+                        "Authenticated owner not found with email: " + ownerEmail
+                ));
+        final Parking parking = Parking.builder()
+                .name(request.getName())
+                .address(request.getAddress())
+                .latitude(request.getLatitude())
+                .longitude(request.getLongitude())
+                .description(request.getDescription())
+                .capacity(request.getCapacity())
+                .hourlyRate(request.getHourlyRate())
+                .workingHours(request.getWorkingHours())
+                .features(request.getFeatures())
+                .ownerId(owner.getId())
+                .availableSpots(request.getCapacity())
+                .build();
+        final Parking savedParking = parkingRepository.save(parking);
+        return mapToFlatParkingResponse(savedParking, owner);
     }
 
     private ParkingResponse mapToFlatParkingResponse(Parking parking, AuthUser owner) {

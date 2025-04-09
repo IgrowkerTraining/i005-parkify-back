@@ -39,9 +39,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT,
                                 "/api/v1/parkings/my/availability"
                         ).hasRole("OWNER")
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/v1/parkings/my"
-                        ).hasRole("OWNER")
+                        .requestMatchers("/api/v1/parkings/my").hasRole("OWNER")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session
