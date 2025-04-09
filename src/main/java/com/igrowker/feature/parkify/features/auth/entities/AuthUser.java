@@ -16,11 +16,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
-import java.util.Collection;
-import java.util.List;
 
 @Getter
 @Setter
@@ -51,5 +46,9 @@ public class AuthUser {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    @NotBlank(message = "Contact phone cannot be blank")
+    @Column(name = "contact_phone", nullable = false)
+    private String contactPhone;
 
 }

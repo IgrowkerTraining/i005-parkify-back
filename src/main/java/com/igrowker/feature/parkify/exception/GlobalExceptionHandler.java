@@ -80,6 +80,25 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleParkingNotFoundException(
             ParkingNotFoundException ex, HttpServletRequest request
     ) {
+        log.warn("Parking lookup failed for request [{}]: {}",
+                request.getRequestURI(), ex.getMessage()
+        );
+        final ErrorResponse errorResponse = new ErrorResponse(
+                Instant.now(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(OwnerNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleOwnerNotFoundException(
+            OwnerNotFoundException ex, HttpServletRequest request) {
+        log.error("Data integrity issue detected for request [{}]: {}",
+                request.getRequestURI(), ex.getMessage()
+        );
         final ErrorResponse errorResponse = new ErrorResponse(
                 Instant.now(),
                 HttpStatus.NOT_FOUND.value(),
@@ -94,6 +113,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request
     ) {
+        log.error("Unexpected error occurred for request [{}]: {}",
+                request.getRequestURI(), ex.getMessage(), ex
+        );
         final ErrorResponse errorResponse = new ErrorResponse(
                 Instant.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),

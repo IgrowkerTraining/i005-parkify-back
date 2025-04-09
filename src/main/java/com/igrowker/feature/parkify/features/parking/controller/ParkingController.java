@@ -39,4 +39,10 @@ public class ParkingController {
         return ResponseEntity.ok(parkingService.updateAvailability(request));
     }
 
+    @GetMapping("/{parkingId}")
+    public ResponseEntity<ParkingResponse> getParkingDetails(@PathVariable Long parkingId) {
+        ParkingResponse response = parkingService.getParkingDetails(parkingId);
+        return ResponseEntity.ok(response);
+    }
+
 }

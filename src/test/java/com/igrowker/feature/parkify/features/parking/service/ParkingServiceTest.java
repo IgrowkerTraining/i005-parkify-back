@@ -42,8 +42,7 @@ class ParkingServiceTest {
                 .address(request.getAddress())
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
-                .rateHour(request.getRateHour())
-                .whatsapp(request.getWhatsapp())
+                .hourlyRate(request.getRateHour())
                 .ownerId(request.getOwnerId())
                 .build();
 
@@ -71,7 +70,7 @@ class ParkingServiceTest {
 
         ParkingResponse response = parkingService.updateAvailability(request);
 
-        assertEquals(5, response.getAvailableSpots());
+        assertEquals(5, response.getCurrentAvailability());
         Mockito.verify(parkingRepository).save(parking);
     }
 
