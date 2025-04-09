@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "")
 @RestController
 @RequestMapping("/api/parkings")
 @RequiredArgsConstructor
@@ -25,4 +25,5 @@ public class ParkingController {
             @RequestBody ParkingRequest request) {
         return ResponseEntity.ok(parkingService.updateAvailability(request));
     }
+
 }

@@ -1,10 +1,13 @@
 package com.igrowker.feature.parkify.features.parking.dto.request;
 
-import lombok.Builder;
-import lombok.Getter;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.*;
 
-@Getter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ParkingRequest {
     private String name;
     private String address;
