@@ -4,7 +4,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class RegisterRequest extends com.igrowker.feature.parkify.features.user.dto.RegisterRequest {
     @NotBlank(message = "Username cannot be blank")

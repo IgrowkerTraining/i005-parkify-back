@@ -18,8 +18,15 @@ public class UserService {
     }
 
     public void register(RegisterRequest request) {
-        if (!"driver".equalsIgnoreCase(request.getRole())) {
-            throw new IllegalArgumentException("Rol must be 'driver'.");
+        final String DRIVER_ROLE;
+        DRIVER_ROLE = "driver";
+
+        if (!DRIVER_ROLE.equalsIgnoreCase(request.getRole())) {
+            throw new IllegalArgumentException("Role must be 'driver'.");
+        }
+
+        if (request.getName() == null || request.getEmail() == null || request.getPassword() == null) {
+            throw new IllegalArgumentException("All fields are required.");
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
