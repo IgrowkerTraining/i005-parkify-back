@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class RegisterResponse {
-    private String token;
+    private String uuid;
     private String email;
     private String username;
     private String role;

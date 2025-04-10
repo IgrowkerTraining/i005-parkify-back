@@ -9,7 +9,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.Instant;
@@ -21,8 +20,7 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleValidationExceptions(
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(
             MethodArgumentNotValidException ex, HttpServletRequest request
     ) {
         final Map<String, String> errors = ex.getBindingResult().getAllErrors().stream()
@@ -34,7 +32,7 @@ public class GlobalExceptionHandler {
                         (existingValue, newValue) -> existingValue + "; " + newValue
                 ));
         log.warn("Validation failed for request [{}]: {}", request.getRequestURI(), errors);
-        return new ErrorResponse(
+        final ErrorResponse errorResponse = new ErrorResponse(
                 Instant.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
@@ -42,38 +40,40 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 errors
         );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorResponse handleAuthenticationException(
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(
             AuthenticationException ex, HttpServletRequest request
     ) {
         log.warn("Authentication failed for request [{}]: {}",
                 request.getRequestURI(), ex.getMessage()
         );
-        return new ErrorResponse(
+        final ErrorResponse errorResponse = new ErrorResponse(
                 Instant.now(),
                 HttpStatus.UNAUTHORIZED.value(),
                 HttpStatus.UNAUTHORIZED.getReasonPhrase(),
                 "Authentication Failed: " + ex.getMessage(),
                 request.getRequestURI()
         );
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ErrorResponse handleAccessDeniedException(
+    public ResponseEntity<ErrorResponse>  handleAccessDeniedException(
             AccessDeniedException ex, HttpServletRequest request
     ) {
         log.warn("Access denied for request [{}]: {}", request.getRequestURI(), ex.getMessage());
-        return new ErrorResponse(
+        final ErrorResponse errorResponse = new ErrorResponse(
                 Instant.now(),
                 HttpStatus.FORBIDDEN.value(),
                 HttpStatus.FORBIDDEN.getReasonPhrase(),
                 "Access Denied: You do not have permission to access this resource.",
                 request.getRequestURI()
         );
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+
     }
 
     @ExceptionHandler(ParkingNotFoundException.class)
@@ -97,6 +97,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleOwnerNotFoundException(
             OwnerNotFoundException ex, HttpServletRequest request) {
         log.error("Data integrity issue detected for request [{}]: {}",
+                request.getRequestURI(), ex.getMessage()
+        );
+        final ErrorResponse errorResponse = new ErrorResponse(
+                Instant.now(),
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(FeatureNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleFeatureNotFoundException(
+            FeatureNotFoundException ex, HttpServletRequest request) {
+        log.warn("Feature lookup failed for request [{}]: {}",
                 request.getRequestURI(), ex.getMessage()
         );
         final ErrorResponse errorResponse = new ErrorResponse(

@@ -66,7 +66,7 @@ public class SecurityConfig {
                         ).authenticated()
                         .requestMatchers(
                                 antMatcher(HttpMethod.GET, CONFIG_PATH + "/initial")
-                        ).authenticated()
+                        ).permitAll()
                         .requestMatchers(
                                 antMatcher(HttpMethod.GET, RECOMMENDATIONS_PATH + "/zones"),
                                 antMatcher(HttpMethod.GET, RECOMMENDATIONS_PATH + "/parkings")

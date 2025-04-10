@@ -3,11 +3,18 @@ package com.igrowker.feature.parkify.features.parking.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateMyParkingRequest {
 
     @NotBlank(message = "Parking name cannot be blank")
@@ -26,5 +33,6 @@ public class CreateMyParkingRequest {
     @PositiveOrZero(message = "Hourly rate must be zero or positive")
     private Double hourlyRate;
     private String workingHours;
-    private String features;
+    @Builder.Default // Инициализируем пустым списком по умолчанию
+    private List<String> featureSlugs = new ArrayList<>();
 }

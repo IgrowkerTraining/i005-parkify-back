@@ -15,6 +15,7 @@ public class ConfigController {
 
     private final ConfigService configService;
 
+    // #10
     @GetMapping("/initial")
     public ResponseEntity<InitialConfigResponse> getInitialConfig() {
         final InitialConfigResponse configData = configService.getInitialConfigData();

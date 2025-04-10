@@ -42,13 +42,13 @@ class ConfigServiceImplTest {
         InitialConfigResponse actualResponse = configService.getInitialConfigData();
 
         assertAll(
-                () -> assertThat(actualResponse.getThemeColors().getPrimary())
+                () -> assertThat(actualResponse.themeColors().primary())
                         .isEqualTo(PRIMARY_COLOR),
-                () -> assertThat(actualResponse.getThemeColors().getSecondary())
+                () -> assertThat(actualResponse.themeColors().secondary())
                         .isEqualTo(SECONDARY_COLOR),
-                () -> assertThat(actualResponse.getFeatureFlags().getRecommendationsEnabled())
+                () -> assertThat(actualResponse.featureFlags().recommendationsEnabled())
                         .isEqualTo(RECOMMENDATIONS_FLAG),
-                () -> assertThat(actualResponse.getFeatureFlags().getOnlineBookingEnabled())
+                () -> assertThat(actualResponse.featureFlags().onlineBookingEnabled())
                         .isEqualTo(BOOKING_FLAG)
         );
     }

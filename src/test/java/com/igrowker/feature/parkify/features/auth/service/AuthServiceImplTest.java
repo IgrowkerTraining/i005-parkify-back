@@ -40,19 +40,19 @@ class AuthServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        registerRequest = new RegisterRequest();
-        registerRequest.setEmail("newuser@example.com");
-        registerRequest.setUsername("NewUser");
-        registerRequest.setPassword("123456");
+        registerRequest = new RegisterRequest(
+                "NewUser", "newuser@example.com", "123456",
+                "role", "0123456789"
+        );
     }
 
     @Test
     void register_Success_ShouldReturnRegisterResponse() {
         // Arrange
-        when(authUserRepository.findByEmail(registerRequest.getEmail()))
+        when(authUserRepository.findByEmail(registerRequest.email()))
                 .thenReturn(Optional.empty());
 
-        when(passwordEncoder.encode(registerRequest.getPassword()))
+        when(passwordEncoder.encode(registerRequest.password()))
                 .thenReturn("encodedPassword");
 
         when(jwtService.generateToken(any(User.class)))
@@ -63,7 +63,7 @@ class AuthServiceImplTest {
 
         // Assert
         assertNotNull(response);
-        assertEquals("mocked-jwt-token", response.getToken());
+        assertEquals("mocked-jwt-token", response.getUuid());
         assertEquals("newuser@example.com", response.getEmail());
         assertEquals("NewUser", response.getUsername());
         assertEquals("OWNER", response.getRole());
@@ -73,7 +73,7 @@ class AuthServiceImplTest {
 
     @Test
     void register_EmailAlreadyExists_ShouldThrowException() {
-        when(authUserRepository.findByEmail(registerRequest.getEmail()))
+        when(authUserRepository.findByEmail(registerRequest.email()))
                 .thenReturn(Optional.of(new AuthUser()));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () ->

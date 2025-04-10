@@ -23,6 +23,6 @@ public class ParkingResponse {
     private Integer currentAvailability;
     private Double hourlyRate;
     private String workingHours;
-    private List<String> features;
+    private List<String> featureSlugs;
     private Long ownerId;
 }

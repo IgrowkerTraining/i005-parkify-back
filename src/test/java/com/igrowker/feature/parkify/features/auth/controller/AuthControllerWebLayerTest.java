@@ -1,6 +1,7 @@
 package com.igrowker.feature.parkify.features.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.igrowker.feature.parkify.common.service.UriBuilderService;
 import com.igrowker.feature.parkify.features.auth.dto.request.LoginRequest;
 import com.igrowker.feature.parkify.features.auth.security.JwtService;
 import com.igrowker.feature.parkify.features.auth.security.SecurityConfig;
@@ -42,12 +43,12 @@ class AuthControllerWebLayerTest {
     @MockBean
     UserDetailsService userDetailsService;
     private LoginRequest loginRequest;
+    @MockBean
+    private UriBuilderService uriBuilderService;
 
     @BeforeEach
     void setUp() {
-        loginRequest = new LoginRequest();
-        loginRequest.setEmail("test.wed@example.com");
-        loginRequest.setPassword("goodpassword");
+        loginRequest = new LoginRequest("test.wed@example.com", "goodpassword");
     }
 
     @Test
@@ -77,8 +78,7 @@ class AuthControllerWebLayerTest {
 
     @Test
     void login_InvalidRequestBody_MissingEmail_ShouldReturnBadRequest() throws Exception {
-        final LoginRequest invalidRequest = new LoginRequest();
-        invalidRequest.setPassword("password");
+        final LoginRequest invalidRequest = new LoginRequest("", "password");
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -88,8 +88,7 @@ class AuthControllerWebLayerTest {
 
     @Test
     void login_InvalidRequestBody_MissingPassword_ShouldReturnBadRequest() throws Exception {
-        final LoginRequest invalidRequest = new LoginRequest();
-        invalidRequest.setEmail("test@example.com");
+        final LoginRequest invalidRequest = new LoginRequest("test@example.com", null);
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

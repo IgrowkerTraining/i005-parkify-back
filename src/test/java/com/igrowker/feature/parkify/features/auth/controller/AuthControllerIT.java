@@ -59,9 +59,7 @@ class AuthControllerIT {
 
     @BeforeEach
     void setUp() {
-        loginRequest = new LoginRequest();
-        loginRequest.setEmail("test.owner.it@example.com");
-        loginRequest.setPassword("password");
+        loginRequest = new LoginRequest("test.owner.it@example.com", "password");
     }
 
     @Test
@@ -75,30 +73,29 @@ class AuthControllerIT {
     }
 
     @Test
-    void login_InvalidCredentials_ShouldReturnUnauthorized() throws Exception { // 401 для неверных данных
-        loginRequest.setPassword("wrongpassword");
+    void login_InvalidCredentials_ShouldReturnUnauthorized() throws Exception {
+        final LoginRequest loginRequest1 = new LoginRequest(loginRequest.email(), "wrongpassword");
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest)))
+                        .content(objectMapper.writeValueAsString(loginRequest1)))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void login_UserNotFound_ShouldReturnUnauthorized() throws Exception {
-        loginRequest.setEmail("nonexistent.user@example.com");
+        final LoginRequest loginRequest1 = new LoginRequest("nonexistent.user@example.com", loginRequest.password());
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest)))
+                        .content(objectMapper.writeValueAsString(loginRequest1)))
                 .andExpect(status().isUnauthorized());
     }
 
 
     @Test
     void login_InvalidRequestBody_MissingEmail_ShouldReturnBadRequest() throws Exception {
-        final LoginRequest invalidRequest = new LoginRequest();
-        invalidRequest.setPassword("password");
+        final LoginRequest invalidRequest = new LoginRequest("", "password");
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -108,8 +105,7 @@ class AuthControllerIT {
 
     @Test
     void login_InvalidRequestBody_MissingPassword_ShouldReturnBadRequest() throws Exception {
-        final LoginRequest invalidRequest = new LoginRequest();
-        invalidRequest.setEmail("test.owner.it@example.com");
+        final LoginRequest invalidRequest = new LoginRequest("test.owner.it@example.com", "");
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

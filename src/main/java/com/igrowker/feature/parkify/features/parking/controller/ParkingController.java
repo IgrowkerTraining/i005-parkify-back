@@ -2,25 +2,34 @@ package com.igrowker.feature.parkify.features.parking.controller;
 
 import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
+import com.igrowker.feature.parkify.features.parking.dto.request.UpdateAvailabilityRequest;
+import com.igrowker.feature.parkify.features.parking.dto.response.PaginatedParkingResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingDetailsResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
 import com.igrowker.feature.parkify.features.parking.service.ParkingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @CrossOrigin(origins = "")
 @RestController
@@ -29,46 +38,108 @@ import java.net.URI;
 public class ParkingController {
     private final ParkingService parkingService;
 
+    // #20, #22
+    @GetMapping
+    public ResponseEntity<PaginatedParkingResponse> findParkings(
+            @RequestParam Double latitude,
+            @RequestParam Double longitude,
+            @RequestParam(required = false, defaultValue = "1000") Integer radius,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Integer minAvailability,
+            @RequestParam(name = "features", required = false) List<String> featureSlugs,
+            @RequestParam(required = false, defaultValue = "20") int limit,
+            @RequestParam(required = false, defaultValue = "0") int offset,
+            Pageable pageable
+    ) {
+        final PaginatedParkingResponse response = parkingService.findNearbyParkings(
+                latitude, longitude, radius, maxPrice, minAvailability, featureSlugs,
+                limit, offset, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    // #25
     @GetMapping("/{parkingId}/availability")
     public ResponseEntity<ParkingAvailabilityResponse> getParkingAvailability
-            (@PathVariable Long parkingId
-            ) {
+    (@PathVariable Long parkingId
+    ) {
         ParkingAvailabilityResponse response = parkingService.getParkingAvailability(parkingId);
         return ResponseEntity.ok(response);
     }
 
+    @Deprecated
     @PostMapping("/create")
     public ResponseEntity<ParkingResponse> createParking(@RequestBody ParkingRequest request) {
         ParkingResponse response = parkingService.createParking(request);
         return ResponseEntity.ok(response);
     }
 
+    @Deprecated
     @PutMapping("/update-availability")
     public ResponseEntity<ParkingResponse> updateAvailability(
             @RequestBody ParkingRequest request) {
         return ResponseEntity.ok(parkingService.updateAvailability(request));
     }
 
+    @PutMapping("/{parkingId}/features/{featureSlug}")
+    @ResponseStatus(HttpStatus.NO_CONTENT) // Ответ 204 No Content при успехе
+    public void addFeatureToParking(
+            @PathVariable Long parkingId,
+            @PathVariable String featureSlug,
+            Authentication authentication) { // Нужна аутентификация владельца
+        // Проверка прав владельца (или админа) должна быть в сервисе
+        String ownerEmail = authentication.getName();
+        parkingService.associateFeature(ownerEmail, parkingId, featureSlug);
+    }
+
+    @DeleteMapping("/{parkingId}/features/{featureSlug}")
+    @ResponseStatus(HttpStatus.NO_CONTENT) // Ответ 204 No Content
+    public void removeFeatureFromParking(
+            @PathVariable Long parkingId,
+            @PathVariable String featureSlug,
+            Authentication authentication) { // Нужна аутентификация владельца
+        // Проверка прав владельца (или админа) должна быть в сервисе
+        String ownerEmail = authentication.getName();
+        parkingService.disassociateFeature(ownerEmail, parkingId, featureSlug);
+    }
+
+    // #23
     @GetMapping("/{parkingId}")
-    public ResponseEntity<ParkingResponse> getParkingDetails(@PathVariable Long parkingId) {
-        ParkingResponse response = parkingService.getParkingDetails(parkingId);
+    public ResponseEntity<ParkingDetailsResponse> getParkingDetails(@PathVariable Long parkingId) {
+        final ParkingDetailsResponse response = parkingService.getParkingDetails(parkingId);
         return ResponseEntity.ok(response);
     }
 
+    // #15 (step 2)
     @PostMapping("/my")
     public ResponseEntity<ParkingResponse> createMyParking(
             @Valid @RequestBody CreateMyParkingRequest request,
             Authentication authentication
     ) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         final String ownerEmail = authentication.getName();
         final ParkingResponse createdParking = parkingService.createMyParking(request, ownerEmail);
         final URI location = ServletUriComponentsBuilder
                 .fromCurrentContextPath().path("/api/v1/parkings/{id}")
                 .buildAndExpand(createdParking.getId()).toUri();
-        return ResponseEntity.created(location).body(createdParking); // Возвращаем 201 Created
+        return ResponseEntity.created(location).body(createdParking);
+    }
+
+    // #26
+    @GetMapping("/my")
+    public ResponseEntity<ParkingDetailsResponse> getMyParking(Authentication authentication) {
+        final String ownerEmail = authentication.getName();
+        final ParkingDetailsResponse response = parkingService.getMyParkingDetails(ownerEmail);
+        return ResponseEntity.ok(response);
+    }
+
+    // #27
+    @PatchMapping("/my/availability")
+    public ResponseEntity<ParkingAvailabilityResponse> updateMyParkingAvailability(
+            @Valid @RequestBody UpdateAvailabilityRequest request,
+            Authentication authentication) {
+        final String ownerEmail = authentication.getName();
+        final ParkingAvailabilityResponse updatedAvailability = parkingService
+                .updateMyParkingAvailability(ownerEmail, request.availableSpots());
+        return ResponseEntity.ok(updatedAvailability);
     }
 
 }

@@ -6,8 +6,10 @@ import com.igrowker.feature.parkify.exception.OwnerNotFoundException;
 import com.igrowker.feature.parkify.exception.ParkingNotFoundException;
 import com.igrowker.feature.parkify.features.auth.security.JwtService;
 import com.igrowker.feature.parkify.features.auth.security.SecurityConfig;
+import com.igrowker.feature.parkify.features.parking.dto.LocationDto;
 import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingDetailsResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
 import com.igrowker.feature.parkify.features.parking.service.ParkingService;
 import org.junit.jupiter.api.BeforeEach;
@@ -106,11 +108,22 @@ class ParkingControllerWebLayerTest {
         }
 
         @Test
-        @DisplayName("should return 403 Forbidden when not authenticated")
-        void getParkingAvailability_NotAuthenticated_ReturnsForbidden() throws Exception {
+        @DisplayName("should return OK when not authenticated (public access)") // Переименовали
+        void getParkingAvailability_NotAuthenticated_ReturnsOk() throws Exception { // Переименовали
+            // Arrange: Можно оставить мок, если он есть, или убрать, если не проверяем тело
+            final ParkingAvailabilityResponse mockResponse = new ParkingAvailabilityResponse(
+                    VALID_PARKING_ID, EXPECTED_AVAILABILITY
+            );
+            when(parkingService.getParkingAvailability(VALID_PARKING_ID)).thenReturn(mockResponse);
+
+
+            // Act & Assert: Выполняем GET и ожидаем 200 OK
             mockMvc.perform(get("/api/v1/parkings/{id}/availability", VALID_PARKING_ID)
                             .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isOk()); // <-- ИЗМЕНЕНО: Ожидаем isOk()
+
+            // Verify: Можно оставить проверку вызова сервиса
+            verify(parkingService, times(1)).getParkingAvailability(VALID_PARKING_ID);
         }
     }
 
@@ -124,50 +137,49 @@ class ParkingControllerWebLayerTest {
         )
         @WithMockUser
         void getParkingDetails_AuthenticatedAndExists_ReturnsOkWithData() throws Exception {
-            final ParkingResponse mockResponse = ParkingResponse.builder()
-                    .id(VALID_PARKING_ID)
+            final ParkingDetailsResponse mockDetailsResponse = ParkingDetailsResponse.builder()
+                    .id(String.valueOf(VALID_PARKING_ID))
                     .name("Mock Parking Detail")
                     .address("1 Detail Mock Street")
-                    .latitude(11.1)
-                    .longitude(22.2)
+                    .location(new LocationDto(11.1, 22.2))
                     .description("Mock Detailed Description")
                     .capacity(100)
                     .currentAvailability(50)
                     .hourlyRate(4.5)
                     .workingHours("24/7")
-                    .features(List.of("covered", "ev"))
-                    .ownerId(VALID_OWNER_ID)
+                    .featureSlugs(List.of("covered", "ev"))
+                    .ownerId(String.valueOf(VALID_OWNER_ID))
                     .build();
-            when(parkingService.getParkingDetails(VALID_PARKING_ID)).thenReturn(mockResponse);
+            when(parkingService.getParkingDetails(VALID_PARKING_ID)).thenReturn(mockDetailsResponse);
 
             mockMvc.perform(get("/api/v1/parkings/{id}", VALID_PARKING_ID)
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.id",
-                            is(VALID_PARKING_ID.intValue())))
+                            is(String.valueOf(VALID_PARKING_ID))))
                     .andExpect(jsonPath("$.name",
-                            is(mockResponse.getName())))
+                            is(mockDetailsResponse.getName())))
                     .andExpect(jsonPath("$.address",
-                            is(mockResponse.getAddress())))
-                    .andExpect(jsonPath("$.latitude",
-                            is(mockResponse.getLatitude())))
-                    .andExpect(jsonPath("$.longitude",
-                            is(mockResponse.getLongitude())))
+                            is(mockDetailsResponse.getAddress())))
+                    .andExpect(jsonPath("$.location.latitude",
+                            is(mockDetailsResponse.getLocation().latitude())))
+                    .andExpect(jsonPath("$.location.longitude",
+                            is(mockDetailsResponse.getLocation().longitude())))
                     .andExpect(jsonPath("$.description",
-                            is(mockResponse.getDescription())))
+                            is(mockDetailsResponse.getDescription())))
                     .andExpect(jsonPath("$.capacity",
-                            is(mockResponse.getCapacity())))
+                            is(mockDetailsResponse.getCapacity())))
                     .andExpect(jsonPath("$.currentAvailability",
-                            is(mockResponse.getCurrentAvailability())))
+                            is(mockDetailsResponse.getCurrentAvailability())))
                     .andExpect(jsonPath("$.hourlyRate",
-                            is(mockResponse.getHourlyRate())))
+                            is(mockDetailsResponse.getHourlyRate())))
                     .andExpect(jsonPath("$.workingHours",
-                            is(mockResponse.getWorkingHours())))
-                    .andExpect(jsonPath("$.features",
+                            is(mockDetailsResponse.getWorkingHours())))
+                    .andExpect(jsonPath("$.featureSlugs",
                             containsInAnyOrder("covered", "ev")))
                     .andExpect(jsonPath("$.ownerId",
-                            is(VALID_OWNER_ID.intValue())));
+                            is(String.valueOf(VALID_OWNER_ID))));
         }
 
         @Test
@@ -210,11 +222,23 @@ class ParkingControllerWebLayerTest {
         }
 
         @Test
-        @DisplayName("should return 403 Forbidden when not authenticated")
-        void getParkingDetails_NotAuthenticated_ReturnsForbidden() throws Exception {
+        @DisplayName("should return OK when not authenticated (public access)") // Переименовали
+        void getParkingDetails_NotAuthenticated_ReturnsOk() throws Exception { // Переименовали
+            // Arrange: Настроим мок сервиса, чтобы он возвращал данные, даже если тест не проверяет тело
+            final ParkingDetailsResponse mockDetailsResponse = ParkingDetailsResponse.builder()
+                    .id(String.valueOf(VALID_PARKING_ID))
+                    .name("Public Parking Details")
+                    // ... можно добавить другие поля, если нужно для полноты мока
+                    .build();
+            when(parkingService.getParkingDetails(VALID_PARKING_ID)).thenReturn(mockDetailsResponse);
+
+            // Act & Assert: Выполняем GET и ожидаем 200 OK
             mockMvc.perform(get("/api/v1/parkings/{id}", VALID_PARKING_ID)
                             .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isOk()); // <-- ИЗМЕНЕНО: Ожидаем isOk() вместо isForbidden()
+
+            // Verify: Можно оставить проверку вызова сервиса
+            verify(parkingService, times(1)).getParkingDetails(VALID_PARKING_ID);
         }
     }
 
@@ -227,6 +251,7 @@ class ParkingControllerWebLayerTest {
 
         @BeforeEach
         void createMyParkingSetup() {
+            final List<String> featureSlugs = List.of("cctv", "accessible");
             validCreateRequest = CreateMyParkingRequest.builder()
                     .name("My Web Layer Parking")
                     .address("456 Web St")
@@ -236,7 +261,7 @@ class ParkingControllerWebLayerTest {
                     .capacity(20)
                     .hourlyRate(3.0)
                     .workingHours("08:00-22:00")
-                    .features("cctv, accessible")
+                    .featureSlugs(featureSlugs)
                     .build();
 
             createdParkingResponse = ParkingResponse.builder()
@@ -250,7 +275,7 @@ class ParkingControllerWebLayerTest {
                     .currentAvailability(validCreateRequest.getCapacity())
                     .hourlyRate(validCreateRequest.getHourlyRate())
                     .workingHours(validCreateRequest.getWorkingHours())
-                    .features(List.of("cctv", "accessible"))
+                    .featureSlugs(featureSlugs)
                     .ownerId(VALID_OWNER_ID)
                     .build();
         }
@@ -278,7 +303,7 @@ class ParkingControllerWebLayerTest {
                             is(validCreateRequest.getCapacity())))
                     .andExpect(jsonPath("$.currentAvailability",
                             is(validCreateRequest.getCapacity())))
-                    .andExpect(jsonPath("$.features",
+                    .andExpect(jsonPath("$.featureSlugs",
                             containsInAnyOrder("cctv", "accessible")));
 
             verify(parkingService, times(1))
