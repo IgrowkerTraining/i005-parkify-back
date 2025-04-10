@@ -31,12 +31,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.jpa.hibernate.ddl-auto=create-drop"
 })
 @Sql(statements = {
-        "DELETE FROM users WHERE email = 'test.owner.it@example.com';", // Оставляем очистку
+        "DELETE FROM users WHERE email = 'test.owner.it@example.com';",
         "INSERT INTO users (username, email, password, role, contact_phone) " +
                 "VALUES ('testuser', 'test.owner.it@example.com', " +
                 "'$2a$10$PK8hd/HO2R/mvqqhdyhS7.QjRF5AKbCMeclnVm.yV6tchnT/CkN6K', " +
                 "'OWNER', " +
-                "'1234567890' );" // <-- Добавлено значение для contact_phone
+                "'1234567890' );"
 })
 class AuthControllerIT {
 

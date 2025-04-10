@@ -128,7 +128,7 @@ class ContentServiceImplTest {
             final FooterProperties nullSocialProperties = new FooterProperties();
             nullSocialProperties.setAboutUsLink(TEST_ABOUT_LINK);
             nullSocialProperties.setContactLink(TEST_CONTACT_LINK);
-            nullSocialProperties.setSocial(null); // Устанавливаем null
+            nullSocialProperties.setSocial(null);
 
             final ContentServiceImpl serviceWithNullSocial = new ContentServiceImpl(nullSocialProperties, testHomeProperties);
 
@@ -149,18 +149,27 @@ class ContentServiceImplTest {
 
             assertAll(
                     () -> assertThat(actualResponse.whoAreWe()).isNotNull(),
-                    () -> assertThat(actualResponse.whoAreWe().title()).isEqualTo("Test Title Who"),
-                    () -> assertThat(actualResponse.whoAreWe().text()).isEqualTo("Test Text Who"),
-                    () -> assertThat(actualResponse.whoAreWe().items()).isNullOrEmpty(),
-
+                    () -> assertThat(actualResponse.whoAreWe().title())
+                            .isEqualTo("Test Title Who"),
+                    () -> assertThat(actualResponse.whoAreWe().text())
+                            .isEqualTo("Test Text Who"),
+                    () -> assertThat(actualResponse.whoAreWe().items())
+                            .isNullOrEmpty(),
                     () -> assertThat(actualResponse.whatWeOffer()).isNotNull(),
-                    () -> assertThat(actualResponse.whatWeOffer().title()).isEqualTo("Test Title Offer"),
-                    () -> assertThat(actualResponse.whatWeOffer().text()).isNullOrEmpty(),
-                    () -> assertThat(actualResponse.whatWeOffer().items()).hasSize(2),
-                    () -> assertThat(actualResponse.whatWeOffer().items().get(0).icon()).isEqualTo("icon1"),
-                    () -> assertThat(actualResponse.whatWeOffer().items().get(0).text()).isEqualTo("Text 1"),
-                    () -> assertThat(actualResponse.whatWeOffer().items().get(1).icon()).isEqualTo("icon2"),
-                    () -> assertThat(actualResponse.whatWeOffer().items().get(1).text()).isEqualTo("Text 2")
+                    () -> assertThat(actualResponse.whatWeOffer().title())
+                            .isEqualTo("Test Title Offer"),
+                    () -> assertThat(actualResponse.whatWeOffer().text())
+                            .isNullOrEmpty(),
+                    () -> assertThat(actualResponse.whatWeOffer().items())
+                            .hasSize(2),
+                    () -> assertThat(actualResponse.whatWeOffer().items().get(0).icon())
+                            .isEqualTo("icon1"),
+                    () -> assertThat(actualResponse.whatWeOffer().items().get(0).text())
+                            .isEqualTo("Text 1"),
+                    () -> assertThat(actualResponse.whatWeOffer().items().get(1).icon())
+                            .isEqualTo("icon2"),
+                    () -> assertThat(actualResponse.whatWeOffer().items().get(1).text())
+                            .isEqualTo("Text 2")
             );
         }
 

@@ -4,5 +4,6 @@ import java.util.List;
 
 public record PaginatedParkingResponse(
         List<ParkingSummaryResponse> data,
-        PaginationInfo pagination) {
+        PaginationInfo pagination
+) {
 }

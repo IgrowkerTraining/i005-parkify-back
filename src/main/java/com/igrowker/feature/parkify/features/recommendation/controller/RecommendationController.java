@@ -33,7 +33,7 @@ public class RecommendationController {
             @RequestParam Double latitude,
             @RequestParam Double longitude,
             @RequestParam(required = false, defaultValue = "2000") Integer radius,
-            @RequestParam(required = false) String timeOfDay, // Опционально, для усложненной логики
+            @RequestParam(required = false) String timeOfDay,
             @RequestParam(required = false, defaultValue = "5") int limit) {
         RecommendedParkingsResponse response = recommendationService.findRecommendedParkings(latitude, longitude, radius, timeOfDay, limit);
         return ResponseEntity.ok(response);

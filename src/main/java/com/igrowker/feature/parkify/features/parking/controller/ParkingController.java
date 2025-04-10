@@ -66,14 +66,14 @@ public class ParkingController {
         return ResponseEntity.ok(response);
     }
 
-    @Deprecated
+    @Deprecated(since = "2025.04.10")
     @PostMapping("/create")
     public ResponseEntity<ParkingResponse> createParking(@RequestBody ParkingRequest request) {
         ParkingResponse response = parkingService.createParking(request);
         return ResponseEntity.ok(response);
     }
 
-    @Deprecated
+    @Deprecated(since = "2025.04.10")
     @PutMapping("/update-availability")
     public ResponseEntity<ParkingResponse> updateAvailability(
             @RequestBody ParkingRequest request) {
@@ -81,23 +81,23 @@ public class ParkingController {
     }
 
     @PutMapping("/{parkingId}/features/{featureSlug}")
-    @ResponseStatus(HttpStatus.NO_CONTENT) // Ответ 204 No Content при успехе
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addFeatureToParking(
             @PathVariable Long parkingId,
             @PathVariable String featureSlug,
-            Authentication authentication) { // Нужна аутентификация владельца
-        // Проверка прав владельца (или админа) должна быть в сервисе
-        String ownerEmail = authentication.getName();
+            Authentication authentication
+    ) {
+        final String ownerEmail = authentication.getName();
         parkingService.associateFeature(ownerEmail, parkingId, featureSlug);
     }
 
     @DeleteMapping("/{parkingId}/features/{featureSlug}")
-    @ResponseStatus(HttpStatus.NO_CONTENT) // Ответ 204 No Content
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeFeatureFromParking(
             @PathVariable Long parkingId,
             @PathVariable String featureSlug,
-            Authentication authentication) { // Нужна аутентификация владельца
-        // Проверка прав владельца (или админа) должна быть в сервисе
+            Authentication authentication
+    ) {
         String ownerEmail = authentication.getName();
         parkingService.disassociateFeature(ownerEmail, parkingId, featureSlug);
     }

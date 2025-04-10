@@ -108,21 +108,16 @@ class ParkingControllerWebLayerTest {
         }
 
         @Test
-        @DisplayName("should return OK when not authenticated (public access)") // Переименовали
-        void getParkingAvailability_NotAuthenticated_ReturnsOk() throws Exception { // Переименовали
-            // Arrange: Можно оставить мок, если он есть, или убрать, если не проверяем тело
+        @DisplayName("should return OK when not authenticated (public access)")
+        void getParkingAvailability_NotAuthenticated_ReturnsOk() throws Exception {
             final ParkingAvailabilityResponse mockResponse = new ParkingAvailabilityResponse(
                     VALID_PARKING_ID, EXPECTED_AVAILABILITY
             );
             when(parkingService.getParkingAvailability(VALID_PARKING_ID)).thenReturn(mockResponse);
 
-
-            // Act & Assert: Выполняем GET и ожидаем 200 OK
             mockMvc.perform(get("/api/v1/parkings/{id}/availability", VALID_PARKING_ID)
                             .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk()); // <-- ИЗМЕНЕНО: Ожидаем isOk()
-
-            // Verify: Можно оставить проверку вызова сервиса
+                    .andExpect(status().isOk());
             verify(parkingService, times(1)).getParkingAvailability(VALID_PARKING_ID);
         }
     }
@@ -222,22 +217,17 @@ class ParkingControllerWebLayerTest {
         }
 
         @Test
-        @DisplayName("should return OK when not authenticated (public access)") // Переименовали
-        void getParkingDetails_NotAuthenticated_ReturnsOk() throws Exception { // Переименовали
-            // Arrange: Настроим мок сервиса, чтобы он возвращал данные, даже если тест не проверяет тело
+        @DisplayName("should return OK when not authenticated (public access)")
+        void getParkingDetails_NotAuthenticated_ReturnsOk() throws Exception {
             final ParkingDetailsResponse mockDetailsResponse = ParkingDetailsResponse.builder()
                     .id(String.valueOf(VALID_PARKING_ID))
                     .name("Public Parking Details")
-                    // ... можно добавить другие поля, если нужно для полноты мока
                     .build();
             when(parkingService.getParkingDetails(VALID_PARKING_ID)).thenReturn(mockDetailsResponse);
 
-            // Act & Assert: Выполняем GET и ожидаем 200 OK
             mockMvc.perform(get("/api/v1/parkings/{id}", VALID_PARKING_ID)
                             .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk()); // <-- ИЗМЕНЕНО: Ожидаем isOk() вместо isForbidden()
-
-            // Verify: Можно оставить проверку вызова сервиса
+                    .andExpect(status().isOk());
             verify(parkingService, times(1)).getParkingDetails(VALID_PARKING_ID);
         }
     }

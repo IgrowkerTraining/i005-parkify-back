@@ -90,37 +90,30 @@ class AuthControllerTest {
 
     @Test
     void register_Success_ShouldReturnCreatedWithRegisterResponse() { // Переименовали для ясности
-        URI mockLocation = URI.create("http://mock-location/api/v1/users/" + expectedUuid);
-        // Arrange: Мокируем сервис, чтобы он вернул ожидаемый ответ
+        final URI mockLocation = URI.create("http://mock-location/api/v1/users/" + expectedUuid);
         when(uriBuilderService.buildUserLocationUri(expectedUuid)).thenReturn(mockLocation);
         when(authService.register(any(RegisterRequest.class))).thenReturn(registerResponse);
 
-        // Act: Вызываем метод контроллера напрямую
         final ResponseEntity<RegisterResponse> responseEntity = authController.register(registerRequest);
 
-        // Assert: Проверяем статус-код и тело ответа
         assertAll(
                 () -> assertNotNull(responseEntity),
-                // Проверяем, что статус CREATED (201), т.к. используется ResponseEntity.created()
                 () -> assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode()),
                 () -> assertNotNull(responseEntity.getBody()),
                 () -> assertEquals(registerResponse.getUuid(), responseEntity.getBody().getUuid()),
                 () -> assertEquals(registerResponse.getEmail(), responseEntity.getBody().getEmail()),
                 () -> assertEquals(registerResponse.getUsername(), responseEntity.getBody().getUsername()),
                 () -> assertEquals(registerResponse.getRole(), responseEntity.getBody().getRole())
-                // Заголовок Location здесь не проверяем!
         );
-
-        // Verify: Убеждаемся, что сервис был вызван
         verify(authService, times(1)).register(registerRequest);
     }
 
     @Test
     void register_ServiceThrowsException_ShouldPropagateException() {
-        RuntimeException expectedException = new RuntimeException("Register failed");
+        final RuntimeException expectedException = new RuntimeException("Register failed");
         when(authService.register(any(RegisterRequest.class))).thenThrow(expectedException);
 
-        RuntimeException thrownException = assertThrows(
+        final RuntimeException thrownException = assertThrows(
                 RuntimeException.class,
                 () -> authController.register(registerRequest)
         );

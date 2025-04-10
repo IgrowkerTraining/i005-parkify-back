@@ -33,6 +33,6 @@ public class CreateMyParkingRequest {
     @PositiveOrZero(message = "Hourly rate must be zero or positive")
     private Double hourlyRate;
     private String workingHours;
-    @Builder.Default // Инициализируем пустым списком по умолчанию
+    @Builder.Default
     private List<String> featureSlugs = new ArrayList<>();
 }

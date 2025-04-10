@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class OperationStatusController {
 
-    private final OperationStatusService operationStatusService; // Нужен сервис
+    private final OperationStatusService operationStatusService;
 
-    // #32 Получение статуса операции
+    // #32
     @GetMapping("/{operationId}/status")
     public ResponseEntity<OperationStatusResponse> getOperationStatus(@PathVariable String operationId) {
         OperationStatusResponse status = operationStatusService.getOperationStatus(operationId);

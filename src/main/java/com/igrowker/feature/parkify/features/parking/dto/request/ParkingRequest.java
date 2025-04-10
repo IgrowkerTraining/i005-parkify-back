@@ -17,7 +17,6 @@ public class ParkingRequest {
     private int available;
     private String whatsapp;
     private Long ownerId;
-
     private Long parkingId;
     private int availableSpots;
 }
