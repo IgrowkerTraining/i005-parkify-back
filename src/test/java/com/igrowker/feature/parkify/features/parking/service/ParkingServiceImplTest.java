@@ -20,6 +20,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import static org.mockito.ArgumentMatchers.any;
+
+import java.util.Collections;
+import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ParkingServiceImpl Unit Tests")
@@ -87,6 +94,52 @@ class ParkingServiceImplTest {
 
         assertThat(exception.getMessage()).isEqualTo("Parking not found with id: " + INVALID_PARKING_ID);
         verify(parkingRepository, times(1)).findById(INVALID_PARKING_ID);
+        verifyNoMoreInteractions(parkingRepository);
+    }
+
+    @DisplayName("getParkingDetailsWithPagination should return a page of parkings when valid input is given")
+    @Test
+    void getParkingDetailsWithPagination_ValidInput_ReturnsPagedParkings() {
+        int page = 0;
+        int size = 2;
+
+        Parking parking1 = new Parking();
+        parking1.setId(1L);
+        parking1.setName("Parking A");
+
+        Parking parking2 = new Parking();
+        parking2.setId(2L);
+        parking2.setName("Parking B");
+
+        Page<Parking> parkingPage = new PageImpl<>(List.of(parking1, parking2));
+        when(parkingRepository.findAll(any(Pageable.class))).thenReturn(parkingPage);
+
+        Page<Parking> result = parkingService.getParkingDetailsWithPagination(page, size);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent().get(0).getName()).isEqualTo("Parking A");
+        assertThat(result.getContent().get(1).getName()).isEqualTo("Parking B");
+
+        verify(parkingRepository, times(1)).findAll(any(Pageable.class));
+        verifyNoMoreInteractions(parkingRepository);
+    }
+
+    @DisplayName("getParkingDetailsWithPagination should return empty page when no results are found")
+    @Test
+    void getParkingDetailsWithPagination_EmptyResults_ReturnsEmptyPage() {
+        int page = 0;
+        int size = 10;
+
+        Page<Parking> emptyPage = new PageImpl<>(Collections.emptyList());
+        when(parkingRepository.findAll(any(Pageable.class))).thenReturn(emptyPage);
+
+        Page<Parking> result = parkingService.getParkingDetailsWithPagination(page, size);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isEmpty();
+
+        verify(parkingRepository, times(1)).findAll(any(Pageable.class));
         verifyNoMoreInteractions(parkingRepository);
     }
 }

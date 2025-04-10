@@ -1,10 +1,14 @@
 package com.igrowker.feature.parkify.features.parking.controller;
 
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
+import com.igrowker.feature.parkify.features.parking.dto.response.NearbyParkingResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
 import com.igrowker.feature.parkify.features.parking.service.ParkingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,4 +43,14 @@ public class ParkingController {
         return ResponseEntity.ok(parkingService.updateAvailability(request));
     }
 
+    @GetMapping("/nearby")
+    public ResponseEntity<Page<NearbyParkingResponse>> getNearbyParkings(
+            @RequestParam double lat,
+            @RequestParam double lon,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(parkingService.getNearbyParkings(lat, lon, pageable));
+    }
 }

@@ -2,11 +2,15 @@ package com.igrowker.feature.parkify.features.parking.service;
 
 import com.igrowker.feature.parkify.exception.ParkingNotFoundException;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
+import com.igrowker.feature.parkify.features.parking.dto.response.NearbyParkingResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
 import com.igrowker.feature.parkify.features.parking.entities.Parking;
 import com.igrowker.feature.parkify.features.parking.repository.ParkingRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,5 +77,29 @@ public class ParkingServiceImpl implements ParkingService {
         final int availability = Optional.ofNullable(parking.getAvailableSpots())
                 .orElse(0);
         return new ParkingAvailabilityResponse(parking.getId(), availability);
+    }
+
+    @Override
+    public Page<NearbyParkingResponse> getNearbyParkings(double lat, double lon, Pageable pageable) {
+        Page<Object[]> results = parkingRepository.findNearbyParkings(lat, lon, pageable);
+        return results.map(row -> {
+            Parking parking = (Parking) row[0];
+            Double distance = (Double) row[1];
+
+            return NearbyParkingResponse.builder()
+                    .id(parking.getId())
+                    .name(parking.getName())
+                    .address(parking.getAddress())
+                    .rateHour(parking.getRateHour())
+                    .availableSpots(parking.getAvailableSpots())
+                    .distanceInKm(Math.round(distance * 100.0) / 100.0)
+                    .build();
+        });
+    }
+
+    @Override
+    public Page<Parking> getParkingDetailsWithPagination(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return parkingRepository.findAll(pageable);
     }
 }
