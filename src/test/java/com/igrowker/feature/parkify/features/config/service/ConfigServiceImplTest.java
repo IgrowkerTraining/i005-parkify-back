@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat; // Используем AssertJ для удобных ассертов
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 @DisplayName("ConfigServiceImpl Unit Tests")
@@ -42,13 +42,13 @@ class ConfigServiceImplTest {
         InitialConfigResponse actualResponse = configService.getInitialConfigData();
 
         assertAll(
-                () -> assertThat(actualResponse.themeColors().primary())
+                () -> assertThat(actualResponse.getThemeColors().getPrimary())
                         .isEqualTo(PRIMARY_COLOR),
-                () -> assertThat(actualResponse.themeColors().secondary())
+                () -> assertThat(actualResponse.getThemeColors().getSecondary())
                         .isEqualTo(SECONDARY_COLOR),
-                () -> assertThat(actualResponse.featureFlags().recommendationsEnabled())
+                () -> assertThat(actualResponse.getFeatureFlags().getRecommendationsEnabled())
                         .isEqualTo(RECOMMENDATIONS_FLAG),
-                () -> assertThat(actualResponse.featureFlags().onlineBookingEnabled())
+                () -> assertThat(actualResponse.getFeatureFlags().getOnlineBookingEnabled())
                         .isEqualTo(BOOKING_FLAG)
         );
     }

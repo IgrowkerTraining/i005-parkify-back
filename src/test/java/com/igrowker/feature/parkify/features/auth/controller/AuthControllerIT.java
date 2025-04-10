@@ -13,15 +13,13 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -32,17 +30,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @Sql(statements = {
         "DELETE FROM users WHERE email = 'test.owner.it@example.com';",
-        "INSERT INTO users (username, email, password, role, contact_phone) " +
+        "INSERT INTO users (username, email, password, role) " +
                 "VALUES ('testuser', 'test.owner.it@example.com', " +
                 "'$2a$10$PK8hd/HO2R/mvqqhdyhS7.QjRF5AKbCMeclnVm.yV6tchnT/CkN6K', " +
-                "'OWNER', " +
-                "'1234567890' );"
+                "'OWNER'" +
+                ");"
 })
 class AuthControllerIT {
 
     @Container
-    static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>(
-            DockerImageName.parse("postgres:15")
+    static MySQLContainer<?> mysqlContainer = new MySQLContainer<>(
+            DockerImageName.parse("mysql:8.0")
     );
     @Autowired
     private MockMvc mockMvc;
@@ -52,14 +50,16 @@ class AuthControllerIT {
 
     @DynamicPropertySource
     static void dynamicProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgresContainer::getJdbcUrl);
-        registry.add("spring.datasource.username", postgresContainer::getUsername);
-        registry.add("spring.datasource.password", postgresContainer::getPassword);
+        registry.add("spring.datasource.url", mysqlContainer::getJdbcUrl);
+        registry.add("spring.datasource.username", mysqlContainer::getUsername);
+        registry.add("spring.datasource.password", mysqlContainer::getPassword);
     }
 
     @BeforeEach
     void setUp() {
-        loginRequest = new LoginRequest("test.owner.it@example.com", "password");
+        loginRequest = new LoginRequest();
+        loginRequest.setEmail("test.owner.it@example.com");
+        loginRequest.setPassword("password");
     }
 
     @Test
@@ -73,29 +73,30 @@ class AuthControllerIT {
     }
 
     @Test
-    void login_InvalidCredentials_ShouldReturnUnauthorized() throws Exception {
-        final LoginRequest loginRequest1 = new LoginRequest(loginRequest.email(), "wrongpassword");
+    void login_InvalidCredentials_ShouldReturnUnauthorized() throws Exception { // 401 для неверных данных
+        loginRequest.setPassword("wrongpassword");
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest1)))
+                        .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void login_UserNotFound_ShouldReturnUnauthorized() throws Exception {
-        final LoginRequest loginRequest1 = new LoginRequest("nonexistent.user@example.com", loginRequest.password());
+        loginRequest.setEmail("nonexistent.user@example.com");
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest1)))
+                        .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isUnauthorized());
     }
 
 
     @Test
     void login_InvalidRequestBody_MissingEmail_ShouldReturnBadRequest() throws Exception {
-        final LoginRequest invalidRequest = new LoginRequest("", "password");
+        final LoginRequest invalidRequest = new LoginRequest();
+        invalidRequest.setPassword("password");
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -105,7 +106,8 @@ class AuthControllerIT {
 
     @Test
     void login_InvalidRequestBody_MissingPassword_ShouldReturnBadRequest() throws Exception {
-        final LoginRequest invalidRequest = new LoginRequest("test.owner.it@example.com", "");
+        final LoginRequest invalidRequest = new LoginRequest();
+        invalidRequest.setEmail("test.owner.it@example.com");
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

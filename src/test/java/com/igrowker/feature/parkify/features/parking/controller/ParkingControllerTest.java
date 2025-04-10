@@ -50,9 +50,9 @@ class ParkingControllerTest {
                 () -> assertThat(actualResponseEntity).isNotNull(),
                 () -> assertThat(actualResponseEntity.getStatusCode()).isEqualTo(HttpStatus.OK),
                 () -> assertThat(actualResponseEntity.getBody()).isNotNull(),
-                () -> assertThat(actualResponseEntity.getBody().parkingId())
+                () -> assertThat(actualResponseEntity.getBody().getParkingId())
                         .isEqualTo(VALID_PARKING_ID),
-                () -> assertThat(actualResponseEntity.getBody().availableSpots())
+                () -> assertThat(actualResponseEntity.getBody().getAvailableSpots())
                         .isEqualTo(EXPECTED_AVAILABILITY)
         );
         verify(parkingService, times(1))

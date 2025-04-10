@@ -1,11 +1,7 @@
 package com.igrowker.feature.parkify.features.user.service;
 
-import com.igrowker.feature.parkify.features.user.dto.request.LocationUpdateRequest;
-import com.igrowker.feature.parkify.features.user.dto.response.PublicUserResponse;
-import jakarta.validation.Valid;
+import org.springframework.stereotype.Service;
 
-public interface UserService {
-    void updateUserLocation(String name, @Valid LocationUpdateRequest request);
-
-    PublicUserResponse getPublicUserById(String userId);
+@Service
+public class UserService {
 }

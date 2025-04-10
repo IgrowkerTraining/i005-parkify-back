@@ -1,11 +1,12 @@
 package com.igrowker.feature.parkify.features.auth.controller;
 
-import com.igrowker.feature.parkify.common.service.UriBuilderService;
+import com.github.dockerjava.api.model.AuthResponse;
 import com.igrowker.feature.parkify.features.auth.dto.request.LoginRequest;
 import com.igrowker.feature.parkify.features.auth.dto.request.RegisterRequest;
 import com.igrowker.feature.parkify.features.auth.dto.response.LoginResponse;
 import com.igrowker.feature.parkify.features.auth.dto.response.RegisterResponse;
 import com.igrowker.feature.parkify.features.auth.service.AuthService;
+import org.h2.engine.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,9 +14,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-
-import java.net.URI;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,32 +26,32 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 @ExtendWith(MockitoExtension.class)
 class AuthControllerTest {
 
     @Mock
     private AuthService authService;
-    @Mock
-    private UriBuilderService uriBuilderService;
 
     @InjectMocks
     private AuthController authController;
 
     private LoginRequest loginRequest;
     private final String testToken = "mockJwtToken123";
-    private String expectedUuid = "Token123";
     private RegisterRequest registerRequest;
     private RegisterResponse registerResponse;
 
     @BeforeEach
     void setUp() {
-        loginRequest = new LoginRequest("test@example.com", "password");
+        loginRequest = new LoginRequest();
+        loginRequest.setEmail("test@example.com");
+        loginRequest.setPassword("password");
 
-        registerRequest = new RegisterRequest(
-                "kris", "kris@example.com", "Password",
-                "role", "0123456789"
-                );
+        registerRequest = new RegisterRequest();
+        registerRequest.setUsername("kris");
+        registerRequest.setEmail("kris@example.com");
+        registerRequest.setPassword("Password");
 
         registerResponse = new RegisterResponse(
                 "Token123",
@@ -89,31 +90,30 @@ class AuthControllerTest {
     }
 
     @Test
-    void register_Success_ShouldReturnCreatedWithRegisterResponse() { // Переименовали для ясности
-        final URI mockLocation = URI.create("http://mock-location/api/v1/users/" + expectedUuid);
-        when(uriBuilderService.buildUserLocationUri(expectedUuid)).thenReturn(mockLocation);
+    void register_Success_ShouldReturnOkWithRegisterResponse() {
         when(authService.register(any(RegisterRequest.class))).thenReturn(registerResponse);
 
-        final ResponseEntity<RegisterResponse> responseEntity = authController.register(registerRequest);
+        final ResponseEntity<RegisterResponse> response = authController.register(registerRequest);
 
         assertAll(
-                () -> assertNotNull(responseEntity),
-                () -> assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode()),
-                () -> assertNotNull(responseEntity.getBody()),
-                () -> assertEquals(registerResponse.getUuid(), responseEntity.getBody().getUuid()),
-                () -> assertEquals(registerResponse.getEmail(), responseEntity.getBody().getEmail()),
-                () -> assertEquals(registerResponse.getUsername(), responseEntity.getBody().getUsername()),
-                () -> assertEquals(registerResponse.getRole(), responseEntity.getBody().getRole())
+                () -> assertNotNull(response),
+                () -> assertEquals(HttpStatus.OK, response.getStatusCode()),
+                () -> assertNotNull(response.getBody()),
+                () -> assertEquals(registerResponse.getToken(), response.getBody().getToken()),
+                () -> assertEquals(registerResponse.getEmail(), response.getBody().getEmail()),
+                () -> assertEquals(registerResponse.getUsername(), response.getBody().getUsername()),
+                () -> assertEquals(registerResponse.getRole(), response.getBody().getRole())
         );
+
         verify(authService, times(1)).register(registerRequest);
     }
 
     @Test
     void register_ServiceThrowsException_ShouldPropagateException() {
-        final RuntimeException expectedException = new RuntimeException("Register failed");
+        RuntimeException expectedException = new RuntimeException("Register failed");
         when(authService.register(any(RegisterRequest.class))).thenThrow(expectedException);
 
-        final RuntimeException thrownException = assertThrows(
+        RuntimeException thrownException = assertThrows(
                 RuntimeException.class,
                 () -> authController.register(registerRequest)
         );

@@ -62,9 +62,9 @@ class ContentControllerWebLayerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.aboutUsLink",
-                        is(expectedFooterResponse.aboutUsLink())))
+                        is(expectedFooterResponse.getAboutUsLink())))
                 .andExpect(jsonPath("$.contactLink",
-                        is(expectedFooterResponse.contactLink())))
+                        is(expectedFooterResponse.getContactLink())))
                 .andExpect(jsonPath("$.socialLinks",
                         hasSize(2)))
                 .andExpect(jsonPath("$.socialLinks[0].platform",

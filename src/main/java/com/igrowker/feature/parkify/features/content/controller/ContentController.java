@@ -16,14 +16,12 @@ public class ContentController {
 
     private final ContentService contentService;
 
-    // #13
     @GetMapping("/footer")
     public ResponseEntity<FooterContentResponse> getFooterContent() {
         final FooterContentResponse footerData = contentService.getFooterData();
         return ResponseEntity.ok(footerData);
     }
 
-    // #11
     @GetMapping("/home")
     public ResponseEntity<HomeContentResponse> getHomeContent() {
         final HomeContentResponse homeData = contentService.getHomeData();

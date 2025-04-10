@@ -1,18 +1,18 @@
 package com.igrowker.feature.parkify.features.content.service;
 
 import com.igrowker.feature.parkify.features.content.config.FooterProperties;
-import com.igrowker.feature.parkify.features.content.config.HomeProperties;
+import com.igrowker.feature.parkify.features.content.config.HomeProperties; // Импортируем HomeProperties
 import com.igrowker.feature.parkify.features.content.dto.FooterContentResponse;
-import com.igrowker.feature.parkify.features.content.dto.HomeContentResponse;
+import com.igrowker.feature.parkify.features.content.dto.HomeContentResponse; // Импортируем HomeContentResponse
 import com.igrowker.feature.parkify.features.content.dto.SocialLinkDto;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeEach; // Импортируем BeforeEach
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.List; // Импортируем List
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -89,9 +89,9 @@ class ContentServiceImplTest {
             final FooterContentResponse actualResponse = contentServiceImpl.getFooterData();
 
             assertAll(
-                    () -> assertThat(actualResponse.aboutUsLink()).isEqualTo(TEST_ABOUT_LINK),
-                    () -> assertThat(actualResponse.contactLink()).isEqualTo(TEST_CONTACT_LINK),
-                    () -> assertThat(actualResponse.socialLinks())
+                    () -> assertThat(actualResponse.getAboutUsLink()).isEqualTo(TEST_ABOUT_LINK),
+                    () -> assertThat(actualResponse.getContactLink()).isEqualTo(TEST_CONTACT_LINK),
+                    () -> assertThat(actualResponse.getSocialLinks())
                             .isNotNull()
                             .hasSize(2)
                             .containsExactlyInAnyOrder(
@@ -114,9 +114,9 @@ class ContentServiceImplTest {
             final FooterContentResponse actualResponse = serviceWithEmptySocial.getFooterData();
 
             assertAll(
-                    () -> assertThat(actualResponse.aboutUsLink()).isEqualTo(TEST_ABOUT_LINK),
-                    () -> assertThat(actualResponse.contactLink()).isEqualTo(TEST_CONTACT_LINK),
-                    () -> assertThat(actualResponse.socialLinks())
+                    () -> assertThat(actualResponse.getAboutUsLink()).isEqualTo(TEST_ABOUT_LINK),
+                    () -> assertThat(actualResponse.getContactLink()).isEqualTo(TEST_CONTACT_LINK),
+                    () -> assertThat(actualResponse.getSocialLinks())
                             .isNotNull()
                             .isEmpty()
             );
@@ -128,7 +128,7 @@ class ContentServiceImplTest {
             final FooterProperties nullSocialProperties = new FooterProperties();
             nullSocialProperties.setAboutUsLink(TEST_ABOUT_LINK);
             nullSocialProperties.setContactLink(TEST_CONTACT_LINK);
-            nullSocialProperties.setSocial(null);
+            nullSocialProperties.setSocial(null); // Устанавливаем null
 
             final ContentServiceImpl serviceWithNullSocial = new ContentServiceImpl(nullSocialProperties, testHomeProperties);
 
@@ -148,28 +148,19 @@ class ContentServiceImplTest {
             final HomeContentResponse actualResponse = contentServiceImpl.getHomeData();
 
             assertAll(
-                    () -> assertThat(actualResponse.whoAreWe()).isNotNull(),
-                    () -> assertThat(actualResponse.whoAreWe().title())
-                            .isEqualTo("Test Title Who"),
-                    () -> assertThat(actualResponse.whoAreWe().text())
-                            .isEqualTo("Test Text Who"),
-                    () -> assertThat(actualResponse.whoAreWe().items())
-                            .isNullOrEmpty(),
-                    () -> assertThat(actualResponse.whatWeOffer()).isNotNull(),
-                    () -> assertThat(actualResponse.whatWeOffer().title())
-                            .isEqualTo("Test Title Offer"),
-                    () -> assertThat(actualResponse.whatWeOffer().text())
-                            .isNullOrEmpty(),
-                    () -> assertThat(actualResponse.whatWeOffer().items())
-                            .hasSize(2),
-                    () -> assertThat(actualResponse.whatWeOffer().items().get(0).icon())
-                            .isEqualTo("icon1"),
-                    () -> assertThat(actualResponse.whatWeOffer().items().get(0).text())
-                            .isEqualTo("Text 1"),
-                    () -> assertThat(actualResponse.whatWeOffer().items().get(1).icon())
-                            .isEqualTo("icon2"),
-                    () -> assertThat(actualResponse.whatWeOffer().items().get(1).text())
-                            .isEqualTo("Text 2")
+                    () -> assertThat(actualResponse.getWhoAreWe()).isNotNull(),
+                    () -> assertThat(actualResponse.getWhoAreWe().getTitle()).isEqualTo("Test Title Who"),
+                    () -> assertThat(actualResponse.getWhoAreWe().getText()).isEqualTo("Test Text Who"),
+                    () -> assertThat(actualResponse.getWhoAreWe().getItems()).isNullOrEmpty(),
+
+                    () -> assertThat(actualResponse.getWhatWeOffer()).isNotNull(),
+                    () -> assertThat(actualResponse.getWhatWeOffer().getTitle()).isEqualTo("Test Title Offer"),
+                    () -> assertThat(actualResponse.getWhatWeOffer().getText()).isNullOrEmpty(),
+                    () -> assertThat(actualResponse.getWhatWeOffer().getItems()).hasSize(2),
+                    () -> assertThat(actualResponse.getWhatWeOffer().getItems().get(0).getIcon()).isEqualTo("icon1"),
+                    () -> assertThat(actualResponse.getWhatWeOffer().getItems().get(0).getText()).isEqualTo("Text 1"),
+                    () -> assertThat(actualResponse.getWhatWeOffer().getItems().get(1).getIcon()).isEqualTo("icon2"),
+                    () -> assertThat(actualResponse.getWhatWeOffer().getItems().get(1).getText()).isEqualTo("Text 2")
             );
         }
 
@@ -187,9 +178,9 @@ class ContentServiceImplTest {
             final HomeContentResponse actualResponse = specificService.getHomeData();
 
             assertAll(
-                    () -> assertThat(actualResponse.whatWeOffer()).isNotNull(),
-                    () -> assertThat(actualResponse.whatWeOffer().title()).isEqualTo("Empty Items Title"),
-                    () -> assertThat(actualResponse.whatWeOffer().items()).isNotNull().isEmpty()
+                    () -> assertThat(actualResponse.getWhatWeOffer()).isNotNull(),
+                    () -> assertThat(actualResponse.getWhatWeOffer().getTitle()).isEqualTo("Empty Items Title"),
+                    () -> assertThat(actualResponse.getWhatWeOffer().getItems()).isNotNull().isEmpty()
             );
         }
     }

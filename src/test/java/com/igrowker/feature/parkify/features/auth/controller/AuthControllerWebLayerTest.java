@@ -1,7 +1,6 @@
 package com.igrowker.feature.parkify.features.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igrowker.feature.parkify.common.service.UriBuilderService;
 import com.igrowker.feature.parkify.features.auth.dto.request.LoginRequest;
 import com.igrowker.feature.parkify.features.auth.security.JwtService;
 import com.igrowker.feature.parkify.features.auth.security.SecurityConfig;
@@ -17,6 +16,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.utility.DockerImageName;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -34,6 +36,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 class AuthControllerWebLayerTest {
     private final String testToken = "webLayerTestJwtToken789";
+    @Container
+    static MySQLContainer<?> mysqlContainer = new MySQLContainer<>(
+            DockerImageName.parse("mysql:8.0")
+    );
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -43,12 +49,12 @@ class AuthControllerWebLayerTest {
     @MockBean
     UserDetailsService userDetailsService;
     private LoginRequest loginRequest;
-    @MockBean
-    private UriBuilderService uriBuilderService;
 
     @BeforeEach
     void setUp() {
-        loginRequest = new LoginRequest("test.wed@example.com", "goodpassword");
+        loginRequest = new LoginRequest();
+        loginRequest.setEmail("test.wed@example.com");
+        loginRequest.setPassword("goodpassword");
     }
 
     @Test
@@ -78,7 +84,8 @@ class AuthControllerWebLayerTest {
 
     @Test
     void login_InvalidRequestBody_MissingEmail_ShouldReturnBadRequest() throws Exception {
-        final LoginRequest invalidRequest = new LoginRequest("", "password");
+        final LoginRequest invalidRequest = new LoginRequest();
+        invalidRequest.setPassword("password");
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -88,7 +95,8 @@ class AuthControllerWebLayerTest {
 
     @Test
     void login_InvalidRequestBody_MissingPassword_ShouldReturnBadRequest() throws Exception {
-        final LoginRequest invalidRequest = new LoginRequest("test@example.com", null);
+        final LoginRequest invalidRequest = new LoginRequest();
+        invalidRequest.setEmail("test@example.com");
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

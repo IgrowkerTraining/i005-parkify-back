@@ -3,7 +3,6 @@ package com.igrowker.feature.parkify.features.auth.service;
 import com.igrowker.feature.parkify.features.auth.dto.request.LoginRequest;
 import com.igrowker.feature.parkify.features.auth.dto.request.RegisterRequest;
 import com.igrowker.feature.parkify.features.auth.dto.response.RegisterResponse;
-import com.igrowker.feature.parkify.features.auth.dto.response.UserResponse;
 import com.igrowker.feature.parkify.features.auth.entities.AuthUser;
 import com.igrowker.feature.parkify.features.auth.entities.Role;
 import com.igrowker.feature.parkify.features.auth.repository.AuthUserRepository;
@@ -13,10 +12,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 
@@ -33,8 +30,8 @@ public class AuthServiceImpl implements AuthService {
     public String login(LoginRequest request) {
         final UserDetails userDetails = (UserDetails) authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
-                                request.email(),
-                                request.password()
+                                request.getEmail(),
+                                request.getPassword()
                         )
                 )
                 .getPrincipal();
@@ -43,16 +40,15 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public RegisterResponse register(RegisterRequest request) {
-        if (authUserRepository.findByEmail(request.email()).isPresent()) {
+        if (authUserRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email is already in use");
         }
 
         AuthUser newUser = new AuthUser();
-        newUser.setUsername(request.username());
-        newUser.setEmail(request.email());
-        newUser.setPassword(passwordEncoder.encode(request.password()));
+        newUser.setUsername(request.getUsername());
+        newUser.setEmail(request.getEmail());
+        newUser.setPassword(passwordEncoder.encode(request.getPassword()));
         newUser.setRole(Role.OWNER);
-        newUser.setContactPhone(request.contactPhone());
 
         authUserRepository.save(newUser);
 
@@ -70,21 +66,5 @@ public class AuthServiceImpl implements AuthService {
                 newUser.getUsername(),
                 newUser.getRole().name()
         );
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public UserResponse getCurrentUserDetails(String email) {
-        final AuthUser authUser = authUserRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException(
-                        "Authenticated user not found with email: " + email)
-                );
-        return UserResponse.builder()
-                .id(String.valueOf(authUser.getId()))
-                .name(authUser.getUsername())
-                .email(authUser.getEmail())
-                .role(authUser.getRole().name())
-                .contactPhone(authUser.getContactPhone())
-                .build();
     }
 }

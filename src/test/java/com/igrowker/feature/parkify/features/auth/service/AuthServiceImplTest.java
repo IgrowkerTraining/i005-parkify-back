@@ -13,9 +13,7 @@ import org.mockito.Mock;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.testcontainers.shaded.com.trilead.ssh2.auth.AuthenticationManager;
-
 import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -42,39 +40,43 @@ class AuthServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        registerRequest = new RegisterRequest(
-                "NewUser", "newuser@example.com", "123456",
-                "role", "0123456789"
-        );
+        registerRequest = new RegisterRequest();
+        registerRequest.setEmail("newuser@example.com");
+        registerRequest.setUsername("NewUser");
+        registerRequest.setPassword("123456");
     }
 
     @Test
     void register_Success_ShouldReturnRegisterResponse() {
-        when(authUserRepository.findByEmail(registerRequest.email()))
+        // Arrange
+        when(authUserRepository.findByEmail(registerRequest.getEmail()))
                 .thenReturn(Optional.empty());
-        when(passwordEncoder.encode(registerRequest.password()))
+
+        when(passwordEncoder.encode(registerRequest.getPassword()))
                 .thenReturn("encodedPassword");
+
         when(jwtService.generateToken(any(User.class)))
                 .thenReturn("mocked-jwt-token");
 
-        final RegisterResponse response = authService.register(registerRequest);
+        // Act
+        RegisterResponse response = authService.register(registerRequest);
 
+        // Assert
         assertNotNull(response);
-        assertAll(
-                () -> assertEquals("mocked-jwt-token", response.getUuid()),
-                () -> assertEquals("newuser@example.com", response.getEmail()),
-                () -> assertEquals("NewUser", response.getUsername()),
-                () -> assertEquals("OWNER", response.getRole())
-        );
+        assertEquals("mocked-jwt-token", response.getToken());
+        assertEquals("newuser@example.com", response.getEmail());
+        assertEquals("NewUser", response.getUsername());
+        assertEquals("OWNER", response.getRole());
+
         verify(authUserRepository, times(1)).save(any(AuthUser.class));
     }
 
     @Test
     void register_EmailAlreadyExists_ShouldThrowException() {
-        when(authUserRepository.findByEmail(registerRequest.email()))
+        when(authUserRepository.findByEmail(registerRequest.getEmail()))
                 .thenReturn(Optional.of(new AuthUser()));
 
-        final RuntimeException exception = assertThrows(RuntimeException.class, () ->
+        RuntimeException exception = assertThrows(RuntimeException.class, () ->
                 authService.register(registerRequest)
         );
 

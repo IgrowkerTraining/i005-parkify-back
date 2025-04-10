@@ -1,9 +1,15 @@
 package com.igrowker.feature.parkify.features.content.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.util.List;
 
-public record ContentSectionDto(
-        String title,
-        String text,
-        List<ContentItemDto> items) {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ContentSectionDto {
+    private String title;
+    private String text;
+    private List<ContentItemDto> items;
 }

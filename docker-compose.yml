@@ -8,36 +8,37 @@ services:
     ports:
       - "8080:8080"  # Mapeamos el puerto 8080
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_db:5432/db_parkify
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_db:3306/db_parkify
       SPRING_DATASOURCE_USERNAME: parkify
       SPRING_DATASOURCE_PASSWORD: 1234
       SPRING_JPA_HIBERNATE_DDL_AUTO: update  # Configuración de JPA para actualizar la base de datos
     depends_on:
-      - postgres_db  # Aseguramos que MySQL se inicie primero
+      - mysql_db  # Aseguramos que MySQL se inicie primero
     networks:
       - app-network
     profiles:
       - app
 
-  # Servicio para la base de datos PostgreSQL
-  postgres_db:
-    image: postgres:15
-    container_name: postgres_db
+  # Servicio para la base de datos MySQL
+  mysql_db:
+    image: mysql:8.0
+    container_name: mysql_db
     restart: always
     environment:
-      POSTGRES_DB: db_parkify
-      POSTGRES_USER: parkify
-      POSTGRES_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: root_password_123  # Contraseña del root de MySQL
+      MYSQL_DATABASE: db_parkify  # Nombre de la base de datos
+      MYSQL_USER: parkify  # Usuario de la base de datos
+      MYSQL_PASSWORD: 1234  # Contraseña para el usuario de la base de datos
     ports:
-      - "5432:5432"
+      - "3306:3306"  # Mapeamos el puerto 3306 de MySQL
     networks:
       - app-network
     volumes:
-      - parkify_postgres_data:/var/lib/postgresql/data
+      - parkify_mysql_data:/var/lib/mysql  # Volumen persistente para la base de datos
 
 # Volúmenes persistentes
 volumes:
-  parkify_postgres_data:
+  parkify_mysql_data:
 
 # Definimos una red para que los contenedores puedan comunicarse entre sí
 networks:
