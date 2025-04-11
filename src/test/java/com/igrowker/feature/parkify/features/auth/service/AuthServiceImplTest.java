@@ -12,19 +12,21 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.testcontainers.shaded.com.trilead.ssh2.auth.AuthenticationManager;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
 class AuthServiceImplTest {
-
-    @Mock
-    private AuthenticationManager authenticationManager;
 
     @Mock
     private JwtService jwtService;
@@ -44,7 +46,7 @@ class AuthServiceImplTest {
     void setUp() {
         registerRequest = new RegisterRequest(
                 "NewUser", "newuser@example.com", "123456",
-                "role", "0123456789"
+                "OWNER", "0123456789"
         );
     }
 
