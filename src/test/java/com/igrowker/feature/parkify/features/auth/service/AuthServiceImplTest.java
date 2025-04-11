@@ -44,7 +44,7 @@ class AuthServiceImplTest {
     void setUp() {
         registerRequest = new RegisterRequest(
                 "NewUser", "newuser@example.com", "123456",
-                "role", "0123456789"
+                "OWNER", "0123456789"
         );
     }
 
