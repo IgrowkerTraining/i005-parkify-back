@@ -1,0 +1,275 @@
+[1mdiff --git a/src/main/java/com/igrowker/feature/parkify/features/parking/controller/ParkingController.java b/src/main/java/com/igrowker/feature/parkify/features/parking/controller/ParkingController.java[m
+[1mindex d23d70c..2baca55 100644[m
+[1m--- a/src/main/java/com/igrowker/feature/parkify/features/parking/controller/ParkingController.java[m
+[1m+++ b/src/main/java/com/igrowker/feature/parkify/features/parking/controller/ParkingController.java[m
+[36m@@ -33,7 +33,7 @@[m [mimport java.util.List;[m
+ [m
+ @CrossOrigin(origins = "")[m
+ @RestController[m
+[31m-@RequestMapping("/api/v1/parkings")[m
+[32m+[m[32m@RequestMapping("/api/v1/parking")[m
+ @RequiredArgsConstructor[m
+ public class ParkingController {[m
+     private final ParkingService parkingService;[m
+[1mdiff --git a/src/main/java/com/igrowker/feature/parkify/features/parking/entities/Parking.java b/src/main/java/com/igrowker/feature/parkify/features/parking/entities/Parking.java[m
+[1mindex 0227eac..c8a02f9 100644[m
+[1m--- a/src/main/java/com/igrowker/feature/parkify/features/parking/entities/Parking.java[m
+[1m+++ b/src/main/java/com/igrowker/feature/parkify/features/parking/entities/Parking.java[m
+[36m@@ -29,7 +29,7 @@[m [mimport java.util.Set;[m
+ @AllArgsConstructor[m
+ @Builder[m
+ @Entity[m
+[31m-@Table(name = "parkings")[m
+[32m+[m[32m@Table(name = "parking")[m
+ @EqualsAndHashCode(onlyExplicitlyIncluded = true)[m
+ public class Parking {[m
+     @Id[m
+[1mdiff --git a/src/main/java/com/igrowker/feature/parkify/features/recommendation/controller/RecommendationController.java b/src/main/java/com/igrowker/feature/parkify/features/recommendation/controller/RecommendationController.java[m
+[1mindex dc6aa80..8ea11c1 100644[m
+[1m--- a/src/main/java/com/igrowker/feature/parkify/features/recommendation/controller/RecommendationController.java[m
+[1m+++ b/src/main/java/com/igrowker/feature/parkify/features/recommendation/controller/RecommendationController.java[m
+[36m@@ -1,5 +1,6 @@[m
+ package com.igrowker.feature.parkify.features.recommendation.controller;[m
+ [m
+[32m+[m[32mimport com.igrowker.feature.parkify.features.recommendation.dto.response.RecommendationResponse;[m
+ import com.igrowker.feature.parkify.features.recommendation.dto.response.RecommendedParkingsResponse;[m
+ import com.igrowker.feature.parkify.features.recommendation.dto.response.RecommendedZonesResponse;[m
+ import com.igrowker.feature.parkify.features.recommendation.service.RecommendationService;[m
+[36m@@ -9,6 +10,7 @@[m [mimport org.springframework.web.bind.annotation.GetMapping;[m
+ import org.springframework.web.bind.annotation.RequestMapping;[m
+ import org.springframework.web.bind.annotation.RequestParam;[m
+ import org.springframework.web.bind.annotation.RestController;[m
+[32m+[m[32mimport java.util.List;[m
+ [m
+ @RestController[m
+ @RequestMapping("/api/v1/recommendations")[m
+[36m@@ -18,6 +20,12 @@[m [mpublic class RecommendationController {[m
+     private final RecommendationService recommendationService; // Нужен сервис[m
+ [m
+     // #28[m
+[32m+[m[32m    @GetMapping("/high-availability")[m
+[32m+[m[32m    public ResponseEntity<List<RecommendationResponse>> getHighAvailabilityRecommendations() {[m
+[32m+[m[32m        List<RecommendationResponse> recommendations = recommendationService.generateRecommendations();[m
+[32m+[m[32m        return ResponseEntity.ok(recommendations);[m
+[32m+[m[32m    }[m
+[32m+[m
+     @GetMapping("/zones")[m
+     public ResponseEntity<RecommendedZonesResponse> getRecommendedZones([m
+             @RequestParam Double latitude,[m
+[1mdiff --git a/src/main/java/com/igrowker/feature/parkify/features/recommendation/dto/response/ParkingRecommendationDto.java b/src/main/java/com/igrowker/feature/parkify/features/recommendation/dto/response/ParkingRecommendationDto.java[m
+[1mindex 74a44ef..609180a 100644[m
+[1m--- a/src/main/java/com/igrowker/feature/parkify/features/recommendation/dto/response/ParkingRecommendationDto.java[m
+[1m+++ b/src/main/java/com/igrowker/feature/parkify/features/recommendation/dto/response/ParkingRecommendationDto.java[m
+[36m@@ -13,7 +13,7 @@[m [mimport lombok.NoArgsConstructor;[m
+ @AllArgsConstructor[m
+ @JsonInclude(JsonInclude.Include.NON_NULL)[m
+ public class ParkingRecommendationDto {[m
+[31m-    private String id;[m
+[32m+[m[32m    private Long id;[m
+     private String name;[m
+     private String address;[m
+     private LocationDto location;[m
+[36m@@ -21,4 +21,5 @@[m [mpublic class ParkingRecommendationDto {[m
+     private Double estimatedAvailabilityScore;[m
+     private Integer currentAvailability;[m
+     private Double hourlyRate;[m
+[32m+[m
+ }[m
+[1mdiff --git a/src/main/java/com/igrowker/feature/parkify/features/recommendation/service/RecommendationService.java b/src/main/java/com/igrowker/feature/parkify/features/recommendation/service/RecommendationService.java[m
+[1mindex 344a06d..95c34b9 100644[m
+[1m--- a/src/main/java/com/igrowker/feature/parkify/features/recommendation/service/RecommendationService.java[m
+[1m+++ b/src/main/java/com/igrowker/feature/parkify/features/recommendation/service/RecommendationService.java[m
+[36m@@ -1,12 +1,17 @@[m
+ package com.igrowker.feature.parkify.features.recommendation.service;[m
+ [m
+[32m+[m[32mimport com.igrowker.feature.parkify.features.recommendation.dto.response.RecommendationResponse;[m
+ import com.igrowker.feature.parkify.features.recommendation.dto.response.RecommendedParkingsResponse;[m
+ import com.igrowker.feature.parkify.features.recommendation.dto.response.RecommendedZonesResponse;[m
+ [m
+[32m+[m[32mimport java.util.List;[m
+[32m+[m
+ public interface RecommendationService {[m
+     RecommendedZonesResponse findRecommendedZones(Double latitude, Double longitude, int limit);[m
+ [m
+     RecommendedParkingsResponse findRecommendedParkings([m
+             Double latitude, Double longitude, Integer radius, String timeOfDay, int limit[m
+     );[m
+[32m+[m
+[32m+[m[32m    List<RecommendationResponse> generateRecommendations();[m
+ }[m
+[1mdiff --git a/src/main/java/com/igrowker/feature/parkify/features/recommendation/service/RecommendationServiceImpl.java b/src/main/java/com/igrowker/feature/parkify/features/recommendation/service/RecommendationServiceImpl.java[m
+[1mindex c06d176..7c5af51 100644[m
+[1m--- a/src/main/java/com/igrowker/feature/parkify/features/recommendation/service/RecommendationServiceImpl.java[m
+[1m+++ b/src/main/java/com/igrowker/feature/parkify/features/recommendation/service/RecommendationServiceImpl.java[m
+[36m@@ -1,11 +1,24 @@[m
+ package com.igrowker.feature.parkify.features.recommendation.service;[m
+ [m
+[32m+[m[32mimport com.igrowker.feature.parkify.features.parking.entities.Parking;[m
+[32m+[m[32mimport com.igrowker.feature.parkify.features.parking.repository.ParkingRepository;[m
+[32m+[m[32mimport com.igrowker.feature.parkify.features.recommendation.dto.response.RecommendationResponse;[m
+ import com.igrowker.feature.parkify.features.recommendation.dto.response.RecommendedParkingsResponse;[m
+ import com.igrowker.feature.parkify.features.recommendation.dto.response.RecommendedZonesResponse;[m
+[32m+[m[32mimport com.igrowker.feature.parkify.features.recommendation.entities.OccupancyHistory;[m
+[32m+[m[32mimport com.igrowker.feature.parkify.features.recommendation.repository.OccupancyHistoryRepository;[m
+[32m+[m[32mimport lombok.RequiredArgsConstructor;[m
+ import org.springframework.stereotype.Service;[m
+[32m+[m[32mimport java.util.List;[m
+[32m+[m[32mimport java.util.stream.Collectors;[m
+ [m
+ @Service[m
+[32m+[m[32m@RequiredArgsConstructor[m
+ public class RecommendationServiceImpl implements RecommendationService {[m
+[32m+[m
+[32m+[m[32m    private final ParkingRepository parkingRepository;[m
+[32m+[m[32m    private final OccupancyHistoryRepository occupancyHistoryRepository;[m
+[32m+[m
+     @Override[m
+     public RecommendedZonesResponse findRecommendedZones(Double latitude, Double longitude, int limit) {[m
+         return null;[m
+[36m@@ -17,4 +30,33 @@[m [mpublic class RecommendationServiceImpl implements RecommendationService {[m
+     ) {[m
+         return null;[m
+     }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public List<RecommendationResponse> generateRecommendations() {[m
+[32m+[m[32m        List<OccupancyHistory> occupancyHistory = occupancyHistoryRepository.findRecentHistory();[m
+[32m+[m
+[32m+[m[32m        List<Parking> highAvailabilityParkings = parkingRepository.findAll().stream()[m
+[32m+[m[32m                .filter(parking -> isHighAvailability(parking, occupancyHistory))[m
+[32m+[m[32m                .collect(Collectors.toList());[m
+[32m+[m
+[32m+[m[32m        return highAvailabilityParkings.stream()[m
+[32m+[m[32m                .map(parking -> new RecommendationResponse(parking.getId(), parking.getName(), parking.getAddress()))[m
+[32m+[m[32m                .collect(Collectors.toList());[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private boolean isHighAvailability(Parking parking, List<OccupancyHistory> occupancyHistory) {[m
+[32m+[m[32m        double averageOccupancy = calculateAverageOccupancy(parking, occupancyHistory);[m
+[32m+[m[32m        return averageOccupancy < 0.5;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    private double calculateAverageOccupancy(Parking parking, List<OccupancyHistory> occupancyHistory) {[m
+[32m+[m[32m        long count = occupancyHistory.stream()[m
+[32m+[m[32m                .filter(history -> history.getParkingId().equals(parking.getId()))[m
+[32m+[m[32m                .count();[m
+[32m+[m[32m        return count > 0 ? occupancyHistory.stream()[m
+[32m+[m[32m                .filter(history -> history.getParkingId().equals(parking.getId()))[m
+[32m+[m[32m                .mapToDouble(OccupancyHistory::getOccupancyRate)[m
+[32m+[m[32m                .average()[m
+[32m+[m[32m                .orElse(0.0) : 0.0;[m
+[32m+[m[32m    }[m
+ }[m
+[1mdiff --git a/src/main/resources/application.properties b/src/main/resources/application.properties[m
+[1mindex 8c5fc53..92a3e8d 100644[m
+[1m--- a/src/main/resources/application.properties[m
+[1m+++ b/src/main/resources/application.properties[m
+[36m@@ -7,7 +7,7 @@[m [mspring.datasource.driver-class-name=org.postgresql.Driver[m
+ [m
+ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect[m
+ spring.jpa.hibernate.ddl-auto=update[m
+[31m-#cambiar luego (update) para base de dato[m
+[32m+[m
+ spring.jpa.show-sql=true[m
+ [m
+ server.port=8080[m
+[1mdiff --git a/src/test/java/com/igrowker/feature/parkify/features/auth/controller/AuthControllerIT.java b/src/test/java/com/igrowker/feature/parkify/features/auth/controller/AuthControllerIT.java[m
+[1mindex 2821f7e..9229327 100644[m
+[1m--- a/src/test/java/com/igrowker/feature/parkify/features/auth/controller/AuthControllerIT.java[m
+[1m+++ b/src/test/java/com/igrowker/feature/parkify/features/auth/controller/AuthControllerIT.java[m
+[36m@@ -4,6 +4,7 @@[m [mimport com.fasterxml.jackson.databind.ObjectMapper;[m
+ import com.igrowker.feature.parkify.features.auth.dto.request.LoginRequest;[m
+ import org.junit.jupiter.api.BeforeEach;[m
+ import org.junit.jupiter.api.Test;[m
+[32m+[m[32mimport org.junit.jupiter.api.TestMethodOrder;[m
+ import org.springframework.beans.factory.annotation.Autowired;[m
+ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;[m
+ import org.springframework.boot.test.context.SpringBootTest;[m
+[36m@@ -17,7 +18,6 @@[m [mimport org.testcontainers.containers.PostgreSQLContainer;[m
+ import org.testcontainers.junit.jupiter.Container;[m
+ import org.testcontainers.junit.jupiter.Testcontainers;[m
+ import org.testcontainers.utility.DockerImageName;[m
+[31m-[m
+ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;[m
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;[m
+ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;[m
+[1mdiff --git a/src/test/java/com/igrowker/feature/parkify/features/parking/service/ParkingServiceImplTest.java b/src/test/java/com/igrowker/feature/parkify/features/parking/service/ParkingServiceImplTest.java[m
+[1mindex 3c3e283..bfa0ffb 100644[m
+[1m--- a/src/test/java/com/igrowker/feature/parkify/features/parking/service/ParkingServiceImplTest.java[m
+[1m+++ b/src/test/java/com/igrowker/feature/parkify/features/parking/service/ParkingServiceImplTest.java[m
+[36m@@ -13,6 +13,11 @@[m [mimport com.igrowker.feature.parkify.features.parking.entities.Parking;[m
+ import com.igrowker.feature.parkify.features.parking.repository.ParkingRepository;[m
+ import com.igrowker.feature.parkify.features.parking_feature.entity.Feature;[m
+ import com.igrowker.feature.parkify.features.parking_feature.repository.FeatureRepository;[m
+[32m+[m[32mimport com.igrowker.feature.parkify.features.recommendation.dto.response.RecommendationResponse;[m
+[32m+[m[32mimport com.igrowker.feature.parkify.features.recommendation.entities.OccupancyHistory;[m
+[32m+[m[32mimport com.igrowker.feature.parkify.features.recommendation.repository.OccupancyHistoryRepository;[m
+[32m+[m[32mimport com.igrowker.feature.parkify.features.recommendation.service.RecommendationService;[m
+[32m+[m[32mimport com.igrowker.feature.parkify.features.recommendation.service.RecommendationServiceImpl;[m
+ import org.junit.jupiter.api.BeforeEach;[m
+ import org.junit.jupiter.api.DisplayName;[m
+ import org.junit.jupiter.api.Nested;[m
+[36m@@ -25,6 +30,7 @@[m [mimport org.mockito.Mock;[m
+ import org.mockito.junit.jupiter.MockitoExtension;[m
+ import org.springframework.dao.DataAccessException;[m
+ [m
+[32m+[m[32mimport java.time.LocalDateTime;[m
+ import java.util.Collections;[m
+ import java.util.List;[m
+ import java.util.Optional;[m
+[36m@@ -82,14 +88,19 @@[m [mclass ParkingServiceImplTest {[m
+     private AuthUserRepository authUserRepository;[m
+     @Mock[m
+     private FeatureRepository featureRepository;[m
+[32m+[m[32m    @Mock[m
+[32m+[m[32m    private OccupancyHistoryRepository occupancyHistoryRepository;[m
+     @InjectMocks[m
+     private ParkingServiceImpl parkingService;[m
+[32m+[m[32m    @InjectMocks[m
+[32m+[m[32m    private RecommendationServiceImpl recommendationService;[m
+     @Captor[m
+     private ArgumentCaptor<Parking> parkingCaptor;[m
+ [m
+     private Parking mockParking;[m
+     private AuthUser mockOwner;[m
+ [m
+[32m+[m
+     @BeforeEach[m
+     void setUp() {[m
+         mockOwner = new AuthUser();[m
+[36m@@ -113,6 +124,27 @@[m [mclass ParkingServiceImplTest {[m
+                 .build();[m
+     }[m
+ [m
+[32m+[m[32m    @Test[m
+[32m+[m[32m    void generateRecommendations_ShouldReturnHighAvailability() {[m
+[32m+[m[32m        Parking parking = new Parking();[m
+[32m+[m[32m        parking.setId(1L);[m
+[32m+[m[32m        parking.setName("Test Parking");[m
+[32m+[m[32m        parking.setAddress("123 Main St");[m
+[32m+[m
+[32m+[m[32m        OccupancyHistory history = new OccupancyHistory();[m
+[32m+[m[32m        history.setParkingId(1L);[m
+[32m+[m[32m        history.setTimestamp(LocalDateTime.now());[m
+[32m+[m[32m        history.setOccupancyRate(0.3);[m
+[32m+[m
+[32m+[m[32m        when(parkingRepository.findAll()).thenReturn(List.of(parking));[m
+[32m+[m[32m        when(occupancyHistoryRepository.findRecentHistory()).thenReturn(List.of(history));[m
+[32m+[m
+[32m+[m[32m        List<RecommendationResponse> recommendations = recommendationService.generateRecommendations();[m
+[32m+[m
+[32m+[m[32m        assertThat(recommendations).hasSize(1);[m
+[32m+[m[32m        assertThat(recommendations.get(0).getName()).isEqualTo("Test Parking");[m
+[32m+[m[32m    }[m
+[32m+[m
+     @Nested[m
+     @DisplayName("Get Parking Details (#23)")[m
+     class GetParkingDetailsTests {[m
+[36m@@ -508,4 +540,6 @@[m [mclass ParkingServiceImplTest {[m
+     class UpdateAvailabilityTests {[m
+ [m
+     }[m
+[32m+[m
+[32m+[m
+ }[m
+\ No newline at end of file[m
