@@ -1,35 +1,36 @@
-name: Build and Push Backend Image
+name: Build and Push Backend
 
 on:
   push:
     branches:
-      - devops
-  workflow_dispatch:  # 👈 habilita correrlo manualmente
+      - develop
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Set up Cloud SDK
+      - name: Autenticarse en GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Instalar gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: parkify-igrowker
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
 
-      - name: Configure Docker for Artifact Registry
+      - name: Configurar Docker para Artifact Registry
         run: |
           gcloud auth configure-docker southamerica-east1-docker.pkg.dev
 
-      - name: Build Docker image
+      - name: Construir imagen del backend
         run: |
-          docker build -t southamerica-east1-docker.pkg.dev/parkify-igrowker-v1/backend-repo/backend:latest .
+          docker build -t southamerica-east1-docker.pkg.dev/parkify-igrowker-v1/backend/parkify-back:latest .
 
-      - name: Push Docker image
+      - name: Subir imagen al Artifact Registry
         run: |
-          docker push southamerica-east1-docker.pkg.dev/parkify-igrowker-v1/backend-repo/backend:latest
-
+          docker push southamerica-east1-docker.pkg.dev/parkify-igrowker-v1/backend/parkify-back:latest
