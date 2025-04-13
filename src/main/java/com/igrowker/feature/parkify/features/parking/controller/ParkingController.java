@@ -3,10 +3,7 @@ package com.igrowker.feature.parkify.features.parking.controller;
 import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.UpdateAvailabilityRequest;
-import com.igrowker.feature.parkify.features.parking.dto.response.PaginatedParkingResponse;
-import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
-import com.igrowker.feature.parkify.features.parking.dto.response.ParkingDetailsResponse;
-import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.*;
 import com.igrowker.feature.parkify.features.parking.service.ParkingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +34,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ParkingController {
     private final ParkingService parkingService;
+
+    //#18
+    @GetMapping("/owner/details")
+    public ResponseEntity<OwnerParkingDetailsResponse> getOwnerWithParking(Authentication authentication) {
+        final String ownerEmail = authentication.getName();
+        final OwnerParkingDetailsResponse response = parkingService.getOwnerWithParking(ownerEmail);
+        return ResponseEntity.ok(response);
+    }
 
     // #20, #22
     @GetMapping

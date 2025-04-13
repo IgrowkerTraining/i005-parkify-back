@@ -8,10 +8,7 @@ import com.igrowker.feature.parkify.features.auth.repository.AuthUserRepository;
 import com.igrowker.feature.parkify.features.parking.dto.LocationDto;
 import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
-import com.igrowker.feature.parkify.features.parking.dto.response.PaginatedParkingResponse;
-import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
-import com.igrowker.feature.parkify.features.parking.dto.response.ParkingDetailsResponse;
-import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.*;
 import com.igrowker.feature.parkify.features.parking.entities.Parking;
 import com.igrowker.feature.parkify.features.parking.repository.ParkingRepository;
 import com.igrowker.feature.parkify.features.parking_feature.entity.Feature;
@@ -214,6 +211,44 @@ public class ParkingServiceImpl implements ParkingService {
                 .workingHours(parking.getWorkingHours())
                 .featureSlugs(featureSlugsList)
                 .ownerId(owner.getId())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OwnerParkingDetailsResponse getOwnerWithParking(String ownerEmail) {
+        AuthUser owner = authUserRepository.findByEmail(ownerEmail)
+                .orElseThrow(() -> new RuntimeException("Owner not found"));
+
+        Parking parking = parkingRepository.findByOwnerId(owner.getId())
+                .orElseThrow(() -> new RuntimeException("Parking not found for owner"));
+
+        List<String> featureSlugs = Optional.ofNullable(parking.getFeatures())
+                .orElse(Collections.emptySet())
+                .stream()
+                .map(Feature::getSlug)
+                .toList();
+
+        ParkingResponse parkingResponse = ParkingResponse.builder()
+                .id(parking.getId())
+                .name(parking.getName())
+                .address(parking.getAddress())
+                .latitude(parking.getLatitude())
+                .longitude(parking.getLongitude())
+                .description(parking.getDescription())
+                .capacity(parking.getCapacity())
+                .currentAvailability(parking.getAvailableSpots())
+                .hourlyRate(parking.getHourlyRate())
+                .workingHours(parking.getWorkingHours())
+                .featureSlugs(featureSlugs)
+                .ownerId(owner.getId())
+                .build();
+
+        return OwnerParkingDetailsResponse.builder()
+                .ownerName(owner.getUsername())
+                .ownerEmail(owner.getEmail())
+                .ownerPhone(owner.getContactPhone())
+                .parking(parkingResponse)
                 .build();
     }
 
