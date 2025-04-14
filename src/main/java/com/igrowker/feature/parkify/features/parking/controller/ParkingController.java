@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import java.net.URI;
 import java.util.List;
 
@@ -36,11 +35,11 @@ public class ParkingController {
     private final ParkingService parkingService;
 
     //#18
-    @GetMapping("/owner/details")
+    @GetMapping("/owner/parking")
     public ResponseEntity<OwnerParkingDetailsResponse> getOwnerWithParking(Authentication authentication) {
-        final String ownerEmail = authentication.getName();
-        final OwnerParkingDetailsResponse response = parkingService.getOwnerWithParking(ownerEmail);
-        return ResponseEntity.ok(response);
+        String ownerEmail = authentication.getName();
+        OwnerParkingDetailsResponse response = parkingService.getOwnerWithParking(ownerEmail);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     // #20, #22

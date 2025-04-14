@@ -1,7 +1,9 @@
 package com.igrowker.feature.parkify.features.parking.controller;
 
 import com.igrowker.feature.parkify.exception.ParkingNotFoundException;
+import com.igrowker.feature.parkify.features.parking.dto.response.OwnerParkingDetailsResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
 import com.igrowker.feature.parkify.features.parking.service.ParkingService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,14 +13,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
+import org.springframework.security.core.Authentication;
+import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ParkingController Unit Tests")
@@ -79,4 +79,49 @@ class ParkingControllerTest {
                 .getParkingAvailability(INVALID_PARKING_ID);
         verifyNoMoreInteractions(parkingService);
     }
+
+    @Test
+    @DisplayName("getOwnerWithParking should return OK with owner and parking data")
+    void getOwnerWithParking_ReturnsOkWithData() {
+        final String ownerEmail = "owner@example.com";
+        final OwnerParkingDetailsResponse expectedResponse = OwnerParkingDetailsResponse.builder()
+                .ownerName("Carlos Test")
+                .ownerEmail(ownerEmail)
+                .ownerPhone("+56999887766")
+                .parking(ParkingResponse.builder()
+                        .id(1L)
+                        .name("Central Parking")
+                        .address("123 Always Live St.")
+                        .latitude(-33.45)
+                        .longitude(-70.66)
+                        .description("Spacious and secure")
+                        .capacity(50)
+                        .currentAvailability(20)
+                        .hourlyRate(1000.0)
+                        .workingHours("08:00 AM - 08:00 PM")
+                        .featureSlugs(List.of("surveillance", "covered"))
+                        .ownerId(10L)
+                        .build())
+                .build();
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn(ownerEmail);
+
+        when(parkingService.getOwnerWithParking(ownerEmail)).thenReturn(expectedResponse);
+
+        final ResponseEntity<OwnerParkingDetailsResponse> response =
+                parkingController.getOwnerWithParking(authentication); // Método correcto
+
+        assertAll(
+                () -> assertThat(response).isNotNull(),
+                () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
+                () -> assertThat(response.getBody()).isNotNull(),
+                () -> assertThat(response.getBody().getOwnerEmail()).isEqualTo(ownerEmail),
+                () -> assertThat(response.getBody().getParking().getName()).isEqualTo("Central Parking")
+        );
+
+        verify(parkingService, times(1)).getOwnerWithParking(ownerEmail);
+        verifyNoMoreInteractions(parkingService);
+    }
+
 }

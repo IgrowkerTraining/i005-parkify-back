@@ -6,6 +6,7 @@ import com.igrowker.feature.parkify.exception.ParkingNotFoundException;
 import com.igrowker.feature.parkify.features.auth.entities.AuthUser;
 import com.igrowker.feature.parkify.features.auth.repository.AuthUserRepository;
 import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
+import com.igrowker.feature.parkify.features.parking.dto.response.OwnerParkingDetailsResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingDetailsResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
@@ -117,6 +118,84 @@ class ParkingServiceImplTest {
                 .features(Set.of(FEATURE_COVERED, FEATURE_SECURITY, FEATURE_EV))
                 .ownerId(VALID_OWNER_ID_LONG)
                 .build();
+    }
+
+    @Test
+    void getOwnerWithParking_ShouldReturnOwnerAndParkingDetails() {
+        String email = "owner@example.com";
+        AuthUser owner = new AuthUser();
+        owner.setId(1L);
+        owner.setUsername("Owner Name");
+        owner.setEmail(email);
+        owner.setContactPhone("+56999887766");
+
+        Parking parking = new Parking();
+        parking.setId(1L);
+        parking.setName("Test Parking");
+        parking.setAddress("123 Test Address");
+        parking.setLatitude(40.7128);
+        parking.setLongitude(74.0060);
+        parking.setDescription("Test Parking Description");
+        parking.setAvailableSpots(5);
+        parking.setHourlyRate(10.0);
+        parking.setWorkingHours("08:00 AM - 08:00 PM");
+        parking.setOwnerId(1L);
+
+        when(authUserRepository.findByEmail(email)).thenReturn(Optional.of(owner));
+        when(parkingRepository.findByOwnerId(owner.getId())).thenReturn(Optional.of(parking));
+
+        OwnerParkingDetailsResponse response = parkingService.getOwnerWithParking(email);
+
+        assertNotNull(response);
+        assertEquals(owner.getUsername(), response.getOwnerName());
+        assertEquals(owner.getEmail(), response.getOwnerEmail());
+        assertEquals(owner.getContactPhone(), response.getOwnerPhone());
+
+        ParkingResponse parkingResponse = response.getParking();
+        assertNotNull(parkingResponse);
+        assertEquals(parking.getId(), parkingResponse.getId());
+        assertEquals(parking.getName(), parkingResponse.getName());
+        assertEquals(parking.getAddress(), parkingResponse.getAddress());
+        assertEquals(parking.getLatitude(), parkingResponse.getLatitude());
+        assertEquals(parking.getLongitude(), parkingResponse.getLongitude());
+        assertEquals(parking.getDescription(), parkingResponse.getDescription());
+        assertEquals(parking.getAvailableSpots(), parkingResponse.getCurrentAvailability());
+        assertEquals(parking.getHourlyRate(), parkingResponse.getHourlyRate());
+        assertEquals(parking.getWorkingHours(), parkingResponse.getWorkingHours());
+        assertEquals(parking.getOwnerId(), parkingResponse.getOwnerId());
+
+        verify(authUserRepository, times(1)).findByEmail(email);
+        verify(parkingRepository, times(1)).findByOwnerId(owner.getId());
+    }
+
+    @Test
+    void getOwnerWithParking_ShouldThrowException_WhenOwnerNotFound() {
+        String email = "nonexistent@example.com";
+
+        when(authUserRepository.findByEmail(email)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> parkingService.getOwnerWithParking(email));
+
+        verify(authUserRepository, times(1)).findByEmail(email);
+        verify(parkingRepository, times(0)).findByOwnerId(any());
+    }
+
+    @Test
+    void getOwnerWithParking_ShouldThrowException_WhenParkingNotFound() {
+        String email = "owner@example.com";
+        AuthUser owner = new AuthUser();
+        owner.setId(1L);
+        owner.setUsername("Owner Name");
+        owner.setEmail(email);
+        owner.setContactPhone("+56999887766");
+
+        when(authUserRepository.findByEmail(email)).thenReturn(Optional.of(owner));
+        when(parkingRepository.findByOwnerId(owner.getId())).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> parkingService.getOwnerWithParking(email));
+
+        verify(authUserRepository, times(1)).findByEmail(email);
+        verify(parkingRepository, times(1)).findByOwnerId(owner.getId());
     }
 
     @Test
