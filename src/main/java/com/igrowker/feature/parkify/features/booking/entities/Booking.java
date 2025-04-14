@@ -14,4 +14,13 @@ public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Getter
+    @Column(name = "start_date")
+    private Object startDate;
+
+    @Column(name = "end_date")
+    public Object getEndDate() {
+        return null;
+    }
 }

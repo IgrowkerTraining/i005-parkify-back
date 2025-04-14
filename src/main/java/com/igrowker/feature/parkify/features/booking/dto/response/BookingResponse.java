@@ -18,4 +18,7 @@ public class BookingResponse {
     private OffsetDateTime requestedAt;
     private OffsetDateTime bookingTime;
     private OperationStatus status;
+
+    public BookingResponse(Long id, Object startDate, Object endDate) {
+    }
 }
