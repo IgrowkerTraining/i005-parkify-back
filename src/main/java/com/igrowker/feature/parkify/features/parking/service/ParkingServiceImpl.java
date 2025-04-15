@@ -171,8 +171,10 @@ public class ParkingServiceImpl implements ParkingService {
     ) {
         List<Parking> allParkings = parkingRepository.findAll();
 
-        List<Parking> filtered = allParkings.stream()
-                .filter(p -> {
+        List<ParkingWithDistance> filtered = allParkings.stream()
+                .map(p -> new ParkingWithDistance(p, haversine(latitude, longitude, p.getLatitude(), p.getLongitude())))
+                .filter(pwd -> {
+                    final Parking p = pwd.parking;
                     // 1. Filtro por distancia (si radius está seteado)
                     double distance = haversine(latitude, longitude, p.getLatitude(), p.getLongitude());
                     if (radius != null && distance > radius) return false;
@@ -197,7 +199,7 @@ public class ParkingServiceImpl implements ParkingService {
                     return true;
                 })
                 // Ordenamos por cercanía
-                .sorted(Comparator.comparingDouble(p -> haversine(latitude, longitude, p.getLatitude(), p.getLongitude())))
+                .sorted(Comparator.comparingDouble(ParkingWithDistance::distance))
                 .toList();
 
         // Total sin paginar
@@ -207,17 +209,22 @@ public class ParkingServiceImpl implements ParkingService {
         List<ParkingSummaryResponse> paginatedList = filtered.stream()
                 .skip(offset)
                 .limit(limit)
-                .map(p -> new ParkingSummaryResponse(
-                        p.getId(),
-                        p.getName(),
-                        p.getAddress(),
-                        p.getLatitude(),
-                        p.getLongitude(),
-                        p.getHourlyRate()
-                ))
+                .map(pwd -> {
+                    Parking p = pwd.parking();
+                    int availability = ofNullable(p.getAvailableSpots()).orElse(0);
+                    return ParkingSummaryResponse.builder()
+                            .id(p.getId().toString())
+                            .name(p.getName())
+                            .address(p.getAddress())
+                            .location(new LocationDto(p.getLatitude(), p.getLongitude()))
+                            .hourlyRate(p.getHourlyRate())
+                            .currentAvailability(availability)
+                            .distance(pwd.distance())
+                            .build();
+                })
                 .toList();
 
-        PaginationInfo paginationInfo = new PaginationInfo(offset, limit, filtered.size());
+        PaginationInfo paginationInfo = new PaginationInfo(total, limit, offset);
 
         return new PaginatedParkingResponse(paginatedList, paginationInfo);
 
@@ -318,5 +325,7 @@ public class ParkingServiceImpl implements ParkingService {
                 .parking(parkingResponse)
                 .build();
     }
+
+    private record ParkingWithDistance(Parking parking, double distance) {}
 
 }
