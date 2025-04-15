@@ -155,6 +155,22 @@ public class ParkingServiceImpl implements ParkingService {
         return mapToFlatParkingResponse(savedParking, owner);
     }
 
+    /**
+     * Finds nearby parkings based on geographical coordinates and applies optional filters.
+     * Note: This implementation performs filtering and sorting in memory after fetching all parkings.
+     * For large datasets, performance optimization by moving logic to the database query is recommended.
+     *
+     * @param latitude        The latitude of the search center.
+     * @param longitude       The longitude of the search center.
+     * @param radius          Optional maximum distance from the center in *kilometers*. If null, distance is not filtered.
+     * @param maxPrice        Optional maximum hourly rate.
+     * @param minAvailability Optional minimum number of available spots.
+     * @param featureSlugs    Optional list of required feature slugs.
+     * @param limit           The maximum number of results per page.
+     * @param offset          The starting offset for pagination.
+     * @param pageable        (Currently unused in favor of manual limit/offset, but kept for signature compatibility)
+     * @return A paginated response containing parking summaries.
+     */
     //21
     @Override
     @Transactional(readOnly = true)
@@ -180,17 +196,21 @@ public class ParkingServiceImpl implements ParkingService {
                     if (radius != null && distance > radius) return false;
 
                     // 2. Filtro por precio
-                    if (maxPrice != null && p.getHourlyRate() > maxPrice) return false;
+                    if (maxPrice != null && p.getHourlyRate() != null && p.getHourlyRate() > maxPrice)
+                        return false;
 
                     // 3. Filtro por spots disponibles
-                    if (minAvailability != null && p.getAvailableSpots() < minAvailability) return false;
+                    if (minAvailability != null && ofNullable(p.getAvailableSpots()).orElse(0) < minAvailability)
+                        return false;
 
                     // 4. Filtro por features (si están presentes)
                     if (featureSlugs != null && !featureSlugs.isEmpty()) {
                         // Aquí obtenemos las características del parking
-                        List<String> parkingFeatures = p.getFeatures().stream()
-                                .map(Feature::getSlug)  // Usamos Feature::getSlug
-                                .toList();
+                        Set<String> parkingFeatures = (p.getFeatures() == null)
+                                ? Collections.emptySet()
+                                : p.getFeatures().stream()
+                                        .map(Feature::getSlug)
+                                        .collect(Collectors.toSet());
 
                         // Verificamos si las características del parking contienen todas las solicitadas
                         if (!parkingFeatures.containsAll(featureSlugs)) return false;
@@ -358,6 +378,7 @@ public class ParkingServiceImpl implements ParkingService {
                 .build();
     }
 
-    private record ParkingWithDistance(Parking parking, double distance) {}
+    private record ParkingWithDistance(Parking parking, double distance) {
+    }
 
 }
