@@ -7,6 +7,7 @@ import com.igrowker.feature.parkify.features.parking.dto.response.*;
 import com.igrowker.feature.parkify.features.parking.service.ParkingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +42,26 @@ public class ParkingController {
         OwnerParkingDetailsResponse response = parkingService.getOwnerWithParking(ownerEmail);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    //21
+    @GetMapping("/nearby")
+    public ResponseEntity<PaginatedParkingResponse> getNearbyParkings(
+            @RequestParam double lat,
+            @RequestParam double lon,
+            @RequestParam(required = false) Integer radius,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Integer minAvailability,
+            @RequestParam(required = false) List<String> features,
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        Pageable pageable = PageRequest.of(offset / limit, limit);
+        PaginatedParkingResponse response = parkingService.findNearbyParkings(
+                lat, lon, radius, maxPrice, minAvailability, features, limit, offset, pageable
+        );
+        return ResponseEntity.ok(response);
+    }
+
 
     // #20, #22
     @GetMapping

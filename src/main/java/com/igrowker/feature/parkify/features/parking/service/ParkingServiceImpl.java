@@ -19,12 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
@@ -160,14 +155,86 @@ public class ParkingServiceImpl implements ParkingService {
         return mapToFlatParkingResponse(savedParking, owner);
     }
 
+    //21
     @Override
+    @Transactional(readOnly = true)
     public PaginatedParkingResponse findNearbyParkings(
-            Double latitude, Double longitude, Integer radius,
-            Double maxPrice, Integer minAvailability, List<String> featureSlugs,
-            int limit, int offset, Pageable pageable
+            Double latitude,
+            Double longitude,
+            Integer radius,
+            Double maxPrice,
+            Integer minAvailability,
+            List<String> featureSlugs,
+            int limit,
+            int offset,
+            Pageable pageable
     ) {
-        return null;
+        List<Parking> allParkings = parkingRepository.findAll();
+
+        List<Parking> filtered = allParkings.stream()
+                .filter(p -> {
+                    // 1. Filtro por distancia (si radius está seteado)
+                    double distance = haversine(latitude, longitude, p.getLatitude(), p.getLongitude());
+                    if (radius != null && distance > radius) return false;
+
+                    // 2. Filtro por precio
+                    if (maxPrice != null && p.getHourlyRate() > maxPrice) return false;
+
+                    // 3. Filtro por spots disponibles
+                    if (minAvailability != null && p.getAvailableSpots() < minAvailability) return false;
+
+                    // 4. Filtro por features (si están presentes)
+                    if (featureSlugs != null && !featureSlugs.isEmpty()) {
+                        // Aquí obtenemos las características del parking
+                        List<String> parkingFeatures = p.getFeatures().stream()
+                                .map(Feature::getSlug)  // Usamos Feature::getSlug
+                                .toList();
+
+                        // Verificamos si las características del parking contienen todas las solicitadas
+                        if (!parkingFeatures.containsAll(featureSlugs)) return false;
+                    }
+
+                    return true;
+                })
+                // Ordenamos por cercanía
+                .sorted(Comparator.comparingDouble(p -> haversine(latitude, longitude, p.getLatitude(), p.getLongitude())))
+                .toList();
+
+        // Total sin paginar
+        int total = filtered.size();
+
+        // Paginación
+        List<ParkingSummaryResponse> paginatedList = filtered.stream()
+                .skip(offset)
+                .limit(limit)
+                .map(p -> new ParkingSummaryResponse(
+                        p.getId(),
+                        p.getName(),
+                        p.getAddress(),
+                        p.getLatitude(),
+                        p.getLongitude(),
+                        p.getHourlyRate()
+                ))
+                .toList();
+
+        PaginationInfo paginationInfo = new PaginationInfo(offset, limit, filtered.size());
+
+        return new PaginatedParkingResponse(paginatedList, paginationInfo);
+
     }
+
+
+    private double haversine(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371; // Radio de la Tierra en km
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
 
     @Override
     public ParkingAvailabilityResponse updateMyParkingAvailability(
