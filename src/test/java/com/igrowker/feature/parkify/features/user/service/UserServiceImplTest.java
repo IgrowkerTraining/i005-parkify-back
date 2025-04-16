@@ -70,8 +70,8 @@ class UserServiceImplTest {
             mocked.when(SecurityContextHolder::getContext).thenReturn(context);
 
             // Simula que el usuario existe en BD
-            when(userRepository.findByEmail(email)).thenReturn(Optional.of(user))
-            when(BookingMapper.toResponse(booking)).thenReturn(bookingResponse);
+            when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+            mocked.when((MockedStatic.Verification) BookingMapper.toResponse(booking)).thenReturn(bookingResponse);
 
             // Ejecutamos el método
             UserDetailsResponse response = userService.getCurrentUserDetails();
