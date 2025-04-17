@@ -1,45 +1,21 @@
 version: '3.8'
 
 services:
-  # Servicio para la aplicación Spring Boot
   app:
     build: .
     container_name: spring_boot_app
     ports:
-      - "8080:8080"  # Mapeamos el puerto 8080
+      - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres_db:5432/db_parkify
-      SPRING_DATASOURCE_USERNAME: parkify
-      SPRING_DATASOURCE_PASSWORD: 1234
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update  # Configuración de JPA para actualizar la base de datos
-    depends_on:
-      - postgres_db  # Aseguramos que MySQL se inicie primero
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
     networks:
       - app-network
     profiles:
       - app
 
-  # Servicio para la base de datos PostgreSQL
-  postgres_db:
-    image: postgres:15
-    container_name: postgres_db
-    restart: always
-    environment:
-      POSTGRES_DB: db_parkify
-      POSTGRES_USER: parkify
-      POSTGRES_PASSWORD: 1234
-    ports:
-      - "5432:5432"
-    networks:
-      - app-network
-    volumes:
-      - parkify_postgres_data:/var/lib/postgresql/data
-
-# Volúmenes persistentes
-volumes:
-  parkify_postgres_data:
-
-# Definimos una red para que los contenedores puedan comunicarse entre sí
 networks:
   app-network:
     driver: bridge
