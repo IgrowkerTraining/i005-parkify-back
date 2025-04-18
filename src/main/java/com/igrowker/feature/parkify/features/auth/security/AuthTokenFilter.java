@@ -39,7 +39,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             return;
         }
 
-        jwt = authHeader.substring("Bearer: ".length());
+        jwt = authHeader.substring("Bearer ".length());
         try {
             userEmail = jwtService.extractUsername(jwt);
 

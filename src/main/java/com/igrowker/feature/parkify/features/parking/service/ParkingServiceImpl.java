@@ -277,10 +277,18 @@ public class ParkingServiceImpl implements ParkingService {
                 .orElseThrow(() -> new OwnerNotFoundException(
                         "Authenticated owner not found with email: " + ownerEmail
                 ));
-        final Parking parking = parkingRepository.findByOwnerId(owner.getId())
-                .orElseThrow(() -> new ParkingNotFoundException(
-                        "Parking not found for owner with email: " + ownerEmail
-                ));
+
+        final List<Parking> parkings = parkingRepository.findByOwnerId(owner.getId());
+
+        if (parkings.isEmpty()) {
+            throw new ParkingNotFoundException(
+                    "Parking not found for owner with email: " + ownerEmail
+            );
+        }
+
+        // Suponemos que quieres devolver solo uno (el primero)
+        final Parking parking = parkings.get(0);
+
         return mapParkingToDetailsResponse(parking, owner);
     }
 
@@ -323,8 +331,14 @@ public class ParkingServiceImpl implements ParkingService {
         AuthUser owner = authUserRepository.findByEmail(ownerEmail)
                 .orElseThrow(() -> new RuntimeException("Owner not found"));
 
-        Parking parking = parkingRepository.findByOwnerId(owner.getId())
-                .orElseThrow(() -> new RuntimeException("Parking not found for owner"));
+        List<Parking> parkings = parkingRepository.findByOwnerId(owner.getId());
+
+        if (parkings.isEmpty()) {
+            throw new RuntimeException("Parking not found for owner");
+        }
+
+        // Si tienes varios parkings y solo quieres el primero
+        Parking parking = parkings.get(0);  // O puedes elegir otro criterio para seleccionar el parking
 
         List<String> featureSlugs = Optional.ofNullable(parking.getFeatures())
                 .orElse(Collections.emptySet())
@@ -354,6 +368,7 @@ public class ParkingServiceImpl implements ParkingService {
                 .parking(parkingResponse)
                 .build();
     }
+
 
 
     private ParkingDetailsResponse mapParkingToDetailsResponse(Parking parking, AuthUser owner) {

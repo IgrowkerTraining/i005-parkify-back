@@ -142,7 +142,7 @@ class ParkingServiceImplTest {
         parking.setOwnerId(1L);
 
         when(authUserRepository.findByEmail(email)).thenReturn(Optional.of(owner));
-        when(parkingRepository.findByOwnerId(owner.getId())).thenReturn(Optional.of(parking));
+        when(parkingRepository.findByOwnerId(owner.getId())).thenReturn(Collections.singletonList(parking));
 
         OwnerParkingDetailsResponse response = parkingService.getOwnerWithParking(email);
 
@@ -168,6 +168,7 @@ class ParkingServiceImplTest {
         verify(parkingRepository, times(1)).findByOwnerId(owner.getId());
     }
 
+
     @Test
     void getOwnerWithParking_ShouldThrowException_WhenOwnerNotFound() {
         String email = "nonexistent@example.com";
@@ -190,13 +191,15 @@ class ParkingServiceImplTest {
         owner.setContactPhone("+56999887766");
 
         when(authUserRepository.findByEmail(email)).thenReturn(Optional.of(owner));
-        when(parkingRepository.findByOwnerId(owner.getId())).thenReturn(Optional.empty());
+
+        when(parkingRepository.findByOwnerId(owner.getId())).thenReturn(Collections.emptyList());
 
         assertThrows(RuntimeException.class, () -> parkingService.getOwnerWithParking(email));
 
         verify(authUserRepository, times(1)).findByEmail(email);
         verify(parkingRepository, times(1)).findByOwnerId(owner.getId());
     }
+
 
     @Test
     void generateRecommendations_shouldReturnHighAvailabilityParkings() {
