@@ -14,6 +14,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Crear archivo de credenciales
+        run: echo "${{ secrets.GCP_SA_KEY }}" > gha-creds.json
+
       - name: Login en Artifact Registry
         run: |
           gcloud auth activate-service-account --key-file=gha-creds.json
@@ -42,3 +45,4 @@ jobs:
             -e SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }} \
             -e SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }} \
             southamerica-east1-docker.pkg.dev/training-batch-05/parkify-backend/spring-boot:latest
+
