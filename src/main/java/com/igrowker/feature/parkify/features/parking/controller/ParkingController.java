@@ -1,11 +1,18 @@
 package com.igrowker.feature.parkify.features.parking.controller;
 
+import com.igrowker.feature.parkify.exception.GlobalExceptionHandler;
 import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.UpdateAvailabilityRequest;
-import com.igrowker.feature.parkify.features.parking.dto.response.*;
+import com.igrowker.feature.parkify.features.parking.dto.response.OwnerParkingDetailsResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.PaginatedParkingResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingDetailsResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
 import com.igrowker.feature.parkify.features.parking.service.ParkingService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -31,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
 import java.net.URI;
 import java.util.List;
 
@@ -90,6 +99,24 @@ public class ParkingController {
 
 
     // #20, #22
+    @Operation(
+            summary = "Find Nearby Parkings (#20, #22)",
+            description = "Searches for parking facilities near a given location, allowing filtering by radius, price, availability, and features. Returns a paginated list sorted by distance."
+    )
+    @Parameter(name = "latitude", in = ParameterIn.QUERY, required = true, description = "Latitude of the search center", example = "40.7128")
+    @Parameter(name = "longitude", in = ParameterIn.QUERY, required = true, description = "Longitude of the search center", example = "-74.0060")
+    @Parameter(name = "radius", in = ParameterIn.QUERY, description = "Maximum distance in kilometers", example = "5")
+    @Parameter(name = "maxPrice", in = ParameterIn.QUERY, description = "Maximum hourly rate", example = "10.50")
+    @Parameter(name = "minAvailability", in = ParameterIn.QUERY, description = "Minimum number of available spots", example = "1")
+    @Parameter(name = "features", in = ParameterIn.QUERY, description = "Comma-separated list of required feature slugs (e.g., 'covered,security')", example = "covered,security")
+    @Parameter(name = "limit", in = ParameterIn.QUERY, description = "Number of results per page", example = "10")
+    @Parameter(name = "offset", in = ParameterIn.QUERY, description = "Offset for pagination", example = "0")
+    @ApiResponse(responseCode = "200", description = "List of nearby parkings retrieved successfully",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = PaginatedParkingResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid or missing required parameters (latitude, longitude)",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
     @GetMapping
     public ResponseEntity<PaginatedParkingResponse> findParkings(
             @RequestParam Double latitude,
@@ -109,6 +136,16 @@ public class ParkingController {
     }
 
     // #25
+    @Operation(
+            summary = "Get Parking Availability (#25)",
+            description = "Retrieves the current number of available spots for a specific parking facility. Publicly accessible."
+    )
+    @ApiResponse(responseCode = "200", description = "Availability retrieved successfully",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ParkingAvailabilityResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Parking facility not found",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
     @GetMapping("/{parkingId}/availability")
     public ResponseEntity<ParkingAvailabilityResponse> getParkingAvailability
     (@PathVariable Long parkingId
@@ -124,13 +161,38 @@ public class ParkingController {
         return ResponseEntity.ok(response);
     }
 
-    @Deprecated(since = "2025.04.10")
+    @Operation(
+            summary = "Update Parking Availability (Legacy Endpoint)",
+            description = "Updates the number of available spots for a specific parking facility using PUT. " +
+                    "Requires `parkingId` and `availableSpots` within the request body (`ParkingRequest`). " +
+                    "Note: This endpoint uses PUT and a broad request object. Prefer newer PATCH endpoints if available."
+    )
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Parking details including the ID of the parking to update (`parkingId`) " +
+            "and the new number of available spots (`availableSpots`). Other fields may be ignored.",
+            required = true,
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ParkingRequest.class)))
+    @ApiResponse(responseCode = "200", description = "Availability updated successfully. Returns the full updated parking details.",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ParkingResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid request data (e.g., missing parkingId, negative availableSpots, validation errors in ParkingRequest)",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Parking facility not found with the ID provided in the request body (`parkingId`).",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
+//    @Deprecated(since = "2025.04.10")
     @PutMapping("/update-availability")
     public ResponseEntity<ParkingResponse> updateAvailability(
             @RequestBody ParkingRequest request) {
         return ResponseEntity.ok(parkingService.updateAvailability(request));
     }
 
+    @Operation(summary = "Add Feature to Parking", description = "Associates a feature with a specific parking facility. Requires OWNER role.")
+    @ApiResponse(responseCode = "204", description = "Feature associated successfully")
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
+    @ApiResponse(responseCode = "403", description = "Forbidden (Not an OWNER or not owner of the parking)")
+    @ApiResponse(responseCode = "404", description = "Parking or Feature not found")
     @PutMapping("/{parkingId}/features/{featureSlug}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addFeatureToParking(
@@ -142,6 +204,11 @@ public class ParkingController {
         parkingService.associateFeature(ownerEmail, parkingId, featureSlug);
     }
 
+    @Operation(summary = "Remove Feature from Parking", description = "Disassociates a feature from a specific parking facility. Requires OWNER role.")
+    @ApiResponse(responseCode = "204", description = "Feature disassociated successfully")
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
+    @ApiResponse(responseCode = "403", description = "Forbidden (Not an OWNER or not owner of the parking)")
+    @ApiResponse(responseCode = "404", description = "Parking or Feature not found")
     @DeleteMapping("/{parkingId}/features/{featureSlug}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeFeatureFromParking(
@@ -154,6 +221,16 @@ public class ParkingController {
     }
 
     // #23
+    @Operation(
+            summary = "Get Parking Details (#23)",
+            description = "Retrieves detailed information about a specific parking facility, including features and owner ID. Publicly accessible."
+    )
+    @ApiResponse(responseCode = "200", description = "Parking details retrieved successfully",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ParkingDetailsResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Parking facility or its associated owner not found",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
     @GetMapping("/{parkingId}")
     public ResponseEntity<ParkingDetailsResponse> getParkingDetails(@PathVariable Long parkingId) {
         final ParkingDetailsResponse response = parkingService.getParkingDetails(parkingId);
@@ -161,6 +238,19 @@ public class ParkingController {
     }
 
     // #15 (step 2)
+    @Operation(summary = "Create My Parking (for Owner)", description = "Allows an authenticated OWNER to create their parking facility. Use this instead of the deprecated /create. Relates to #15.")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Details of the parking to create", required = true,
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = CreateMyParkingRequest.class)))
+    @ApiResponse(responseCode = "201", description = "Parking created successfully",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ParkingResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid request data (validation error)",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized")
+    @ApiResponse(responseCode = "403", description = "Forbidden (Not an OWNER)")
+    @ApiResponse(responseCode = "404", description = "Owner or required Feature not found")
     @PostMapping("/my")
     public ResponseEntity<ParkingResponse> createMyParking(
             @Valid @RequestBody CreateMyParkingRequest request,
@@ -175,6 +265,22 @@ public class ParkingController {
     }
 
     // #26
+    @Operation(
+            summary = "Get My Parking Details (#26)",
+            description = "Retrieves the details of the parking facility associated with the currently authenticated OWNER."
+    )
+    @ApiResponse(responseCode = "200", description = "Parking details retrieved successfully",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ParkingDetailsResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized (Missing or invalid JWT token)",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
+    @ApiResponse(responseCode = "403", description = "Forbidden (User is not an OWNER)",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
+    @ApiResponse(responseCode = "404", description = "Owner not found or has no associated parking",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
     @GetMapping("/my")
     public ResponseEntity<ParkingDetailsResponse> getMyParking(Authentication authentication) {
         final String ownerEmail = authentication.getName();
