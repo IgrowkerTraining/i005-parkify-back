@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: [self-hosted, linux, gcp]  # Etiquetas del runner que configuramos en la VM
+    runs-on: self-hosted
 
     steps:
       - name: Checkout repo
