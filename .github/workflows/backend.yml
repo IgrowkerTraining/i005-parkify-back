@@ -22,7 +22,7 @@ jobs:
       - name: Instalar gcloud CLI     # Instala y configura la cli de GCP
         uses: google-github-actions/setup-gcloud@v1
         with:
-          project_id: parkify-igrowker
+          project_id: training-batch-05
 
       - name: Configurar Docker para Artifact Registry      # push y pull desde Artifact Registry en la región southamerica-east1 
         run: |
@@ -43,6 +43,6 @@ jobs:
             --platform=managed \
             --region=southamerica-east1 \
             --allow-unauthenticated \
-            --project=parkify-igrowker \
+            --project=training-batch-05 \
             --set-env-vars=SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }},SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }},SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }},SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
         
