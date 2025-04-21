@@ -11,27 +11,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - name: Checkout repo     # Clona el repositorio
+        uses: actions/checkout@v4     
 
-      - name: Autenticarse en GCP
-        uses: google-github-actions/auth@v2
+      - name: Autenticarse en GCP   # Autentica en la nube
+        uses: google-github-actions/auth@v2   
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-      - name: Instalar gcloud CLI
+      - name: Instalar gcloud CLI     # Instala y configura la cli de GCP
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: parkify-igrowker
 
-      - name: Configurar Docker para Artifact Registry
+      - name: Configurar Docker para Artifact Registry      # push y pull desde Artifact Registry en la región southamerica-east1 
         run: |
           gcloud auth configure-docker southamerica-east1-docker.pkg.dev
 
-      - name: Construir imagen del backend
+      - name: Construir imagen del backend      # Construye una imagen Docker desde el Dockerfile
         run: |
           docker build -t southamerica-east1-docker.pkg.dev/training-batch-05/parkify-backend/spring-boot:latest .
 
-      - name: Subir imagen al Artifact Registry
+      - name: Subir imagen al Artifact Registry     # Guarda la imagen en Artifact
         run: |
           docker push southamerica-east1-docker.pkg.dev/training-batch-05/parkify-backend/spring-boot:latest
+
+      - name: Desplegar en Cloud Run
+        run: |
+          gcloud run deploy spring-boot-backend \
+            --image=southamerica-east1-docker.pkg.dev/training-batch-05/parkify-backend/spring-boot:latest \
+            --platform=managed \
+            --region=southamerica-east1 \
+            --allow-unauthenticated \
+            --project=parkify-igrowker \
+            --set-env-vars=SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }},SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }},SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }},SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+        
