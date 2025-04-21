@@ -13,8 +13,11 @@ public class WebConfig implements WebMvcConfigurer{
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
+                // Usar la variable de entorno para obtener el frontend URL
+                String frontendUrl = System.getenv("FRONTEND_URL");
+
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5173")
+                        .allowedOrigins(frontendUrl)  // Establecer el frontend URL dinámicamente
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders("*");
             }

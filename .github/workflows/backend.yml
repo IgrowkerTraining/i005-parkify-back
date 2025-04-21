@@ -45,6 +45,7 @@ jobs:
             -e SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }} \
             -e SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }} \
             -e SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }} \
+            -e FRONTEND_URL=${{ secrets.FRONTEND_URL }} \
             southamerica-east1-docker.pkg.dev/training-batch-05/parkify-backend/spring-boot:latest
 
 
