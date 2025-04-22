@@ -53,8 +53,8 @@ class AuthControllerTest {
                 );
 
         registerResponse = new RegisterResponse(
-                "Token123"
-
+                "Token123",
+                "kris@example.com"
         );
     }
 
@@ -91,7 +91,7 @@ class AuthControllerTest {
         final URI mockLocation = URI.create("http://mock-location/api/v1/users/12345");
         when(uriBuilderService.buildUserLocationUri(anyString())).thenReturn(mockLocation);
 
-        when(authService.register(any(RegisterRequest.class))).thenReturn(new RegisterResponse("mockJwtToken123"));
+        when(authService.register(any(RegisterRequest.class))).thenReturn(new RegisterResponse("mockJwtToken123", "kris@example.com"));
 
         final ResponseEntity<RegisterResponse> responseEntity = authController.register(registerRequest);
 

@@ -10,4 +10,5 @@ import lombok.Data;
 public class RegisterResponse {
     @Schema(description = "JWT token", example = "eyJhbGciOiJIUzI1NiIsInR...")
     private String token;
+    private String email;
 }
