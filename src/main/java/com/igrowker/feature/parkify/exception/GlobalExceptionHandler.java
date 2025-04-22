@@ -149,22 +149,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(FeatureNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleFeatureNotFoundException(
-            FeatureNotFoundException ex, HttpServletRequest request) {
-        log.warn("Feature lookup failed for request [{}]: {}",
-                request.getRequestURI(), ex.getMessage()
-        );
-        final ErrorResponse errorResponse = new ErrorResponse(
-                Instant.now(),
-                HttpStatus.NOT_FOUND.value(),
-                HttpStatus.NOT_FOUND.getReasonPhrase(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request

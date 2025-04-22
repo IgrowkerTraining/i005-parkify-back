@@ -22,8 +22,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
-
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -64,6 +62,7 @@ class ParkingControllerGetMyParkingWebLayerTest {
 
     @BeforeEach
     void setUp() {
+        // Удаляем .featureSlugs(...)
         mockParkingDetailsResponse = ParkingDetailsResponse.builder()
                 .id(PARKING_ID_STR)
                 .name("My Mock Parking")
@@ -74,7 +73,7 @@ class ParkingControllerGetMyParkingWebLayerTest {
                 .currentAvailability(25)
                 .hourlyRate(5.5)
                 .workingHours("Mon-Fri 9-18")
-                .featureSlugs(List.of("covered", "security"))
+                // .featureSlugs(List.of("covered", "security")) // Удалено
                 .ownerId(String.valueOf(OWNER_ID))
                 .build();
     }
@@ -97,12 +96,16 @@ class ParkingControllerGetMyParkingWebLayerTest {
                     .andExpect(jsonPath("$.address", is(mockParkingDetailsResponse.getAddress())))
                     .andExpect(jsonPath("$.location.latitude", is(mockParkingDetailsResponse.getLocation().latitude())))
                     .andExpect(jsonPath("$.currentAvailability", is(mockParkingDetailsResponse.getCurrentAvailability())))
-                    .andExpect(jsonPath("$.featureSlugs[0]", is("covered")))
-                    .andExpect(jsonPath("$.featureSlugs[1]", is("security")))
+                    // Удаляем проверки для featureSlugs
+                    // .andExpect(jsonPath("$.featureSlugs[0]", is("covered")))
+                    // .andExpect(jsonPath("$.featureSlugs[1]", is("security")))
                     .andExpect(jsonPath("$.ownerId", is(String.valueOf(OWNER_ID))));
             verify(parkingService, times(1)).getMyParkingDetails(OWNER_EMAIL_EXISTS_WITH_PARKING);
         }
     }
+
+    // Security Scenarios и NotFound Scenarios остаются без изменений,
+    // так как они не зависели от содержимого ответа, а только от статуса и сообщения об ошибке.
 
     @Nested
     @DisplayName("Security Scenarios")
@@ -112,7 +115,7 @@ class ParkingControllerGetMyParkingWebLayerTest {
         void getMyParking_NotAuthenticated_ReturnsUnauthorized() throws Exception {
             mockMvc.perform(get("/api/v1/parkings/my")
                             .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden());
+                    .andExpect(status().isForbidden()); // Ожидаем 403 Forbidden, так как Spring Security обычно отвечает так, если путь защищен, а пользователь не аутентифицирован или не имеет прав
             verify(parkingService, never()).getMyParkingDetails(any());
         }
 
