@@ -17,7 +17,8 @@ public class WebConfig implements WebMvcConfigurer{
                 String frontendUrl = System.getenv("FRONTEND_URL");
                 System.out.println("FRONTEND_URL: " + frontendUrl);
                 registry.addMapping("/**")
-                        .allowedOrigins(frontendUrl)  // Establecer el frontend URL dinámicamente
+                        .allowedOrigins("*")
+                        //.allowedOrigins(frontendUrl)  // Establecer el frontend URL dinámicamente
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders("*");
             }
