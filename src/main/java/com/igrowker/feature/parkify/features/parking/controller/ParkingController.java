@@ -26,8 +26,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,13 +34,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
-
 
 @RestController
 @RequiredArgsConstructor
@@ -86,13 +81,12 @@ public class ParkingController {
             @RequestParam(required = false) Integer radius,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) Integer minAvailability,
-            @RequestParam(required = false) List<String> features,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "10") int limit
     ) {
         Pageable pageable = PageRequest.of(offset / limit, limit);
         PaginatedParkingResponse response = parkingService.findNearbyParkings(
-                lat, lon, radius, maxPrice, minAvailability, features, limit, offset, pageable
+                lat, lon, radius, maxPrice, minAvailability, limit, offset, pageable
         );
         return ResponseEntity.ok(response);
     }
@@ -101,14 +95,13 @@ public class ParkingController {
     // #20, #22
     @Operation(
             summary = "Find Nearby Parkings (#20, #22)",
-            description = "Searches for parking facilities near a given location, allowing filtering by radius, price, availability, and features. Returns a paginated list sorted by distance."
+            description = "Searches for parking facilities near a given location, allowing filtering by radius, price, availability. Returns a paginated list sorted by distance."
     )
     @Parameter(name = "latitude", in = ParameterIn.QUERY, required = true, description = "Latitude of the search center", example = "40.7128")
     @Parameter(name = "longitude", in = ParameterIn.QUERY, required = true, description = "Longitude of the search center", example = "-74.0060")
     @Parameter(name = "radius", in = ParameterIn.QUERY, description = "Maximum distance in kilometers", example = "5")
     @Parameter(name = "maxPrice", in = ParameterIn.QUERY, description = "Maximum hourly rate", example = "10.50")
     @Parameter(name = "minAvailability", in = ParameterIn.QUERY, description = "Minimum number of available spots", example = "1")
-    @Parameter(name = "features", in = ParameterIn.QUERY, description = "Comma-separated list of required feature slugs (e.g., 'covered,security')", example = "covered,security")
     @Parameter(name = "limit", in = ParameterIn.QUERY, description = "Number of results per page", example = "10")
     @Parameter(name = "offset", in = ParameterIn.QUERY, description = "Offset for pagination", example = "0")
     @ApiResponse(responseCode = "200", description = "List of nearby parkings retrieved successfully",
@@ -124,13 +117,12 @@ public class ParkingController {
             @RequestParam(required = false, defaultValue = "1000") Integer radius,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) Integer minAvailability,
-            @RequestParam(name = "features", required = false) List<String> featureSlugs,
             @RequestParam(required = false, defaultValue = "20") int limit,
             @RequestParam(required = false, defaultValue = "0") int offset,
             Pageable pageable
     ) {
         final PaginatedParkingResponse response = parkingService.findNearbyParkings(
-                latitude, longitude, radius, maxPrice, minAvailability, featureSlugs,
+                latitude, longitude, radius, maxPrice, minAvailability,
                 limit, offset, pageable);
         return ResponseEntity.ok(response);
     }
@@ -188,42 +180,10 @@ public class ParkingController {
         return ResponseEntity.ok(parkingService.updateAvailability(request));
     }
 
-    @Operation(summary = "Add Feature to Parking", description = "Associates a feature with a specific parking facility. Requires OWNER role.")
-    @ApiResponse(responseCode = "204", description = "Feature associated successfully")
-    @ApiResponse(responseCode = "401", description = "Unauthorized")
-    @ApiResponse(responseCode = "403", description = "Forbidden (Not an OWNER or not owner of the parking)")
-    @ApiResponse(responseCode = "404", description = "Parking or Feature not found")
-    @PutMapping("/{parkingId}/features/{featureSlug}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void addFeatureToParking(
-            @PathVariable Long parkingId,
-            @PathVariable String featureSlug,
-            Authentication authentication
-    ) {
-        final String ownerEmail = authentication.getName();
-        parkingService.associateFeature(ownerEmail, parkingId, featureSlug);
-    }
-
-    @Operation(summary = "Remove Feature from Parking", description = "Disassociates a feature from a specific parking facility. Requires OWNER role.")
-    @ApiResponse(responseCode = "204", description = "Feature disassociated successfully")
-    @ApiResponse(responseCode = "401", description = "Unauthorized")
-    @ApiResponse(responseCode = "403", description = "Forbidden (Not an OWNER or not owner of the parking)")
-    @ApiResponse(responseCode = "404", description = "Parking or Feature not found")
-    @DeleteMapping("/{parkingId}/features/{featureSlug}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeFeatureFromParking(
-            @PathVariable Long parkingId,
-            @PathVariable String featureSlug,
-            Authentication authentication
-    ) {
-        String ownerEmail = authentication.getName();
-        parkingService.disassociateFeature(ownerEmail, parkingId, featureSlug);
-    }
-
     // #23
     @Operation(
             summary = "Get Parking Details (#23)",
-            description = "Retrieves detailed information about a specific parking facility, including features and owner ID. Publicly accessible."
+            description = "Retrieves detailed information about a specific parking facility, including owner ID. Publicly accessible."
     )
     @ApiResponse(responseCode = "200", description = "Parking details retrieved successfully",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -250,7 +210,7 @@ public class ParkingController {
                     schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized")
     @ApiResponse(responseCode = "403", description = "Forbidden (Not an OWNER)")
-    @ApiResponse(responseCode = "404", description = "Owner or required Feature not found")
+    @ApiResponse(responseCode = "404", description = "Owner not found")
     @PostMapping("/my")
     public ResponseEntity<ParkingResponse> createMyParking(
             @Valid @RequestBody CreateMyParkingRequest request,

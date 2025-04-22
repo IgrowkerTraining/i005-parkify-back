@@ -3,13 +3,14 @@ package com.igrowker.feature.parkify.features.parking.service;
 import com.igrowker.feature.parkify.exception.ParkingNotFoundException;
 import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
-import com.igrowker.feature.parkify.features.parking.dto.response.*;
+import com.igrowker.feature.parkify.features.parking.dto.response.OwnerParkingDetailsResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.PaginatedParkingResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingDetailsResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.data.domain.Pageable;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 public interface ParkingService {
 
@@ -34,7 +35,7 @@ public interface ParkingService {
 
     PaginatedParkingResponse findNearbyParkings(
             Double latitude, Double longitude, Integer radius,
-            Double maxPrice, Integer minAvailability, List<String> featureSlugs,
+            Double maxPrice, Integer minAvailability,
             int limit, int offset, Pageable pageable
     );
 
@@ -46,11 +47,6 @@ public interface ParkingService {
     );
 
     ParkingDetailsResponse getMyParkingDetails(String ownerEmail);
-
-    void associateFeature(String ownerEmail, Long parkingId, String featureSlug);
-
-    void disassociateFeature(String ownerEmail, Long parkingId, String featureSlug);
-
 
 }
 

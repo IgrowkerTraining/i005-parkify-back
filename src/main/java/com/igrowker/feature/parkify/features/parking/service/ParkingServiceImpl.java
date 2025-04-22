@@ -1,6 +1,5 @@
 package com.igrowker.feature.parkify.features.parking.service;
 
-import com.igrowker.feature.parkify.exception.FeatureNotFoundException;
 import com.igrowker.feature.parkify.exception.OwnerNotFoundException;
 import com.igrowker.feature.parkify.exception.ParkingNotFoundException;
 import com.igrowker.feature.parkify.features.auth.entities.AuthUser;
@@ -8,19 +7,23 @@ import com.igrowker.feature.parkify.features.auth.repository.AuthUserRepository;
 import com.igrowker.feature.parkify.features.parking.dto.LocationDto;
 import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
-import com.igrowker.feature.parkify.features.parking.dto.response.*;
+import com.igrowker.feature.parkify.features.parking.dto.response.OwnerParkingDetailsResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.PaginatedParkingResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.PaginationInfo;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingDetailsResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingSummaryResponse;
 import com.igrowker.feature.parkify.features.parking.entities.Parking;
 import com.igrowker.feature.parkify.features.parking.repository.ParkingRepository;
-import com.igrowker.feature.parkify.features.parking_feature.entity.Feature;
-import com.igrowker.feature.parkify.features.parking_feature.repository.FeatureRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Comparator;
+import java.util.List;
 
 import static java.util.Optional.ofNullable;
 
@@ -30,7 +33,6 @@ public class ParkingServiceImpl implements ParkingService {
 
     private final ParkingRepository parkingRepository;
     private final AuthUserRepository authUserRepository;
-    private final FeatureRepository featureRepository;
 
     @Override
     public ParkingResponse createParking(ParkingRequest request) {
@@ -93,11 +95,6 @@ public class ParkingServiceImpl implements ParkingService {
                 .orElseThrow(() -> new OwnerNotFoundException(
                         "Owner not found with id: " + parking.getOwnerId()
                 ));
-        final List<String> slugs = Optional.ofNullable(parking.getFeatures())
-                .stream()
-                .flatMap(Collection::stream)
-                .map(Feature::getSlug)
-                .toList();
         return ParkingDetailsResponse.builder()
                 .id(parking.getId().toString())
                 .name(parking.getName())
@@ -108,7 +105,6 @@ public class ParkingServiceImpl implements ParkingService {
                 .currentAvailability(ofNullable(parking.getAvailableSpots()).orElse(0))
                 .hourlyRate(parking.getHourlyRate())
                 .workingHours(parking.getWorkingHours())
-                .featureSlugs(slugs)
                 .ownerId(owner.getId().toString())
                 .build();
     }
@@ -120,23 +116,6 @@ public class ParkingServiceImpl implements ParkingService {
                 .orElseThrow(() -> new OwnerNotFoundException(
                         "Authenticated owner not found with email: " + ownerEmail
                 ));
-        Set<Feature> featuresSet = new HashSet<>();
-        final List<String> requestedSlugs = request.getFeatureSlugs();
-
-        if (requestedSlugs != null && !requestedSlugs.isEmpty()) {
-            final Set<String> uniqueRequestedSlugs = new HashSet<>(requestedSlugs);
-            featuresSet = featureRepository.findBySlugIn(uniqueRequestedSlugs);
-            if (featuresSet.size() != uniqueRequestedSlugs.size()) {
-                final Set<String> foundSlugs = featuresSet.stream()
-                        .map(Feature::getSlug)
-                        .collect(Collectors.toSet());
-                final String missingSlug = uniqueRequestedSlugs.stream()
-                        .filter(slug -> !foundSlugs.contains(slug))
-                        .findFirst()
-                        .orElse("unknown slug");
-                throw new FeatureNotFoundException("Feature not found with slug: " + missingSlug);
-            }
-        }
         final Parking parking = Parking.builder()
                 .name(request.getName())
                 .address(request.getAddress())
@@ -146,7 +125,6 @@ public class ParkingServiceImpl implements ParkingService {
                 .capacity(request.getCapacity())
                 .hourlyRate(request.getHourlyRate())
                 .workingHours(request.getWorkingHours())
-                .features(featuresSet)
                 .ownerId(owner.getId())
                 .availableSpots(request.getCapacity())
                 .build();
@@ -165,7 +143,6 @@ public class ParkingServiceImpl implements ParkingService {
      * @param radius          Optional maximum distance from the center in *kilometers*. If null, distance is not filtered.
      * @param maxPrice        Optional maximum hourly rate.
      * @param minAvailability Optional minimum number of available spots.
-     * @param featureSlugs    Optional list of required feature slugs.
      * @param limit           The maximum number of results per page.
      * @param offset          The starting offset for pagination.
      * @param pageable        (Currently unused in favor of manual limit/offset, but kept for signature compatibility)
@@ -180,7 +157,6 @@ public class ParkingServiceImpl implements ParkingService {
             Integer radius,
             Double maxPrice,
             Integer minAvailability,
-            List<String> featureSlugs,
             int limit,
             int offset,
             Pageable pageable
@@ -202,20 +178,6 @@ public class ParkingServiceImpl implements ParkingService {
                     // 3. Filtro por spots disponibles
                     if (minAvailability != null && ofNullable(p.getAvailableSpots()).orElse(0) < minAvailability)
                         return false;
-
-                    // 4. Filtro por features (si están presentes)
-                    if (featureSlugs != null && !featureSlugs.isEmpty()) {
-                        // Aquí obtenemos las características del parking
-                        Set<String> parkingFeatures = (p.getFeatures() == null)
-                                ? Collections.emptySet()
-                                : p.getFeatures().stream()
-                                        .map(Feature::getSlug)
-                                        .collect(Collectors.toSet());
-
-                        // Verificamos si las características del parking contienen todas las solicitadas
-                        if (!parkingFeatures.containsAll(featureSlugs)) return false;
-                    }
-
                     return true;
                 })
                 // Ordenamos por cercanía
@@ -292,23 +254,7 @@ public class ParkingServiceImpl implements ParkingService {
         return mapParkingToDetailsResponse(parking, owner);
     }
 
-    @Override
-    public void associateFeature(String ownerEmail, Long parkingId, String featureSlug) {
-
-    }
-
-    @Override
-    public void disassociateFeature(String ownerEmail, Long parkingId, String featureSlug) {
-
-    }
-
     private ParkingResponse mapToFlatParkingResponse(Parking parking, AuthUser owner) {
-        final List<String> featureSlugsList = Optional.ofNullable(parking.getFeatures())
-                .filter(features -> !features.isEmpty())
-                .map(features -> features.stream()
-                        .map(Feature::getSlug)
-                        .toList())
-                .orElse(Collections.emptyList());
         return ParkingResponse.builder()
                 .id(parking.getId())
                 .name(parking.getName())
@@ -320,7 +266,6 @@ public class ParkingServiceImpl implements ParkingService {
                 .currentAvailability(ofNullable(parking.getAvailableSpots()).orElse(0))
                 .hourlyRate(parking.getHourlyRate())
                 .workingHours(parking.getWorkingHours())
-                .featureSlugs(featureSlugsList)
                 .ownerId(owner.getId())
                 .build();
     }
@@ -339,13 +284,6 @@ public class ParkingServiceImpl implements ParkingService {
 
         // Si tienes varios parkings y solo quieres el primero
         Parking parking = parkings.get(0);  // O puedes elegir otro criterio para seleccionar el parking
-
-        List<String> featureSlugs = Optional.ofNullable(parking.getFeatures())
-                .orElse(Collections.emptySet())
-                .stream()
-                .map(Feature::getSlug)
-                .toList();
-
         ParkingResponse parkingResponse = ParkingResponse.builder()
                 .id(parking.getId())
                 .name(parking.getName())
@@ -357,7 +295,6 @@ public class ParkingServiceImpl implements ParkingService {
                 .currentAvailability(parking.getAvailableSpots())
                 .hourlyRate(parking.getHourlyRate())
                 .workingHours(parking.getWorkingHours())
-                .featureSlugs(featureSlugs)
                 .ownerId(owner.getId())
                 .build();
 
@@ -369,15 +306,7 @@ public class ParkingServiceImpl implements ParkingService {
                 .build();
     }
 
-
-
     private ParkingDetailsResponse mapParkingToDetailsResponse(Parking parking, AuthUser owner) {
-        final List<String> featureSlugs = Optional.ofNullable(parking.getFeatures())
-                .orElse(Collections.emptySet())
-                .stream()
-                .map(Feature::getSlug)
-                .toList();
-
         return ParkingDetailsResponse.builder()
                 .id(parking.getId().toString())
                 .name(parking.getName())
@@ -388,7 +317,6 @@ public class ParkingServiceImpl implements ParkingService {
                 .currentAvailability(ofNullable(parking.getAvailableSpots()).orElse(0))
                 .hourlyRate(parking.getHourlyRate())
                 .workingHours(parking.getWorkingHours())
-                .featureSlugs(featureSlugs)
                 .ownerId(owner.getId().toString())
                 .build();
     }

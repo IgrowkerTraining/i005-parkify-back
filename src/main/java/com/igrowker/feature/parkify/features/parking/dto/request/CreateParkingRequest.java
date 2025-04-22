@@ -28,5 +28,4 @@ public class CreateParkingRequest {
     @PositiveOrZero(message = "Hourly rate must be zero or positive")
     private Double hourlyRate;
     private String workingHours;
-    private List<String> featureSlugs;
 }

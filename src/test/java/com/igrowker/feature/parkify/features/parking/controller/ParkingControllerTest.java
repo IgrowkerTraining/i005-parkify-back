@@ -14,11 +14,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ParkingController Unit Tests")
@@ -99,7 +103,6 @@ class ParkingControllerTest {
                         .currentAvailability(20)
                         .hourlyRate(1000.0)
                         .workingHours("08:00 AM - 08:00 PM")
-                        .featureSlugs(List.of("surveillance", "covered"))
                         .ownerId(10L)
                         .build())
                 .build();
