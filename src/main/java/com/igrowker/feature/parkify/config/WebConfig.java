@@ -15,7 +15,7 @@ public class WebConfig implements WebMvcConfigurer{
             public void addCorsMappings(CorsRegistry registry) {
                 // Usar la variable de entorno para obtener el frontend URL
                 String frontendUrl = System.getenv("FRONTEND_URL");
-
+                System.out.println("FRONTEND_URL: " + frontendUrl);
                 registry.addMapping("/**")
                         .allowedOrigins(frontendUrl)  // Establecer el frontend URL dinámicamente
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
