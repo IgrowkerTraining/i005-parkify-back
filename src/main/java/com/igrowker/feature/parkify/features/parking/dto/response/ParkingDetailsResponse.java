@@ -23,4 +23,6 @@ public class ParkingDetailsResponse {
     private Double hourlyRate;
     private String workingHours;
     private String ownerId;
+    private String parkingPhone;
+    private String parkingImageUrl;
 }

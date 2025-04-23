@@ -174,7 +174,7 @@ public class ParkingController {
     @ApiResponse(responseCode = "404", description = "Parking facility not found with the ID provided in the request body (`parkingId`).",
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                     schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
-//    @Deprecated(since = "2025.04.10")
+    @Deprecated(since = "2025.04.24")
     @PutMapping("/update-availability")
     public ResponseEntity<ParkingResponse> updateAvailability(
             @RequestBody ParkingRequest request) {
@@ -285,14 +285,32 @@ public class ParkingController {
     // #27
     @Operation(
             summary = "Update parking availability",
-            description = "Allows the authenticated owner to update the number of available spots in their parking."
+            description = "Allows the authenticated owner to update the number of available spots " +
+                    "in their parking."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Availability updated successfully",
-                    content = @Content(schema = @Schema(implementation = ParkingAvailabilityResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid request data", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Unauthorized or invalid JWT token", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Owner or parking not found", content = @Content)
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Availability updated successfully",
+                    content = @Content(schema = @Schema(
+                            implementation = ParkingAvailabilityResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request data",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized or invalid JWT token",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Owner or parking not found",
+                    content = @Content
+            )
     })
     @PatchMapping("/my/availability")
     public ResponseEntity<ParkingAvailabilityResponse> updateMyParkingAvailability(
