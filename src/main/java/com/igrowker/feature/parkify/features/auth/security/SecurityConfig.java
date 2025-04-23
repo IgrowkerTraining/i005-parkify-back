@@ -78,7 +78,7 @@ public class SecurityConfig {
                                 antMatcher("/swagger-ui.html")
                         ).permitAll()
                         // Permitir acceso al WebSocket sin autenticación
-                        .requestMatchers("/ws/**").permitAll() 
+                        .requestMatchers("/ws").permitAll() 
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
