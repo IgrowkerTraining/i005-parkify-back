@@ -1,5 +1,6 @@
 package com.igrowker.feature.parkify.features.parking.service;
 
+import com.igrowker.feature.parkify.exception.OwnerNotFoundException;
 import com.igrowker.feature.parkify.exception.ParkingNotFoundException;
 import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
@@ -45,6 +46,16 @@ public interface ParkingService {
             @PositiveOrZero(message = "Available spots must be zero or positive")
             Integer availableSpots
     );
+
+    /**
+     * Deletes the parking facility associated with the given owner.
+     * Assumes an owner has at most one parking for simplicity in MVP.
+     *
+     * @param ownerEmail The email of the authenticated owner.
+     * @throws OwnerNotFoundException if the owner is not found.
+     * @throws ParkingNotFoundException if the owner has no associated parking to delete.
+     */
+    void deleteMyParking(String ownerEmail);
 
     ParkingDetailsResponse getMyParkingDetails(String ownerEmail);
 
