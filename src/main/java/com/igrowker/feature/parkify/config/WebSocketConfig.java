@@ -7,7 +7,14 @@ import com.igrowker.feature.parkify.websocket.YourWebSocketHandler;
 
 @Configuration
 @EnableWebSocket
+@Component
 public class WebSocketConfig implements WebSocketConfigurer {
+
+    private final YourWebSocketHandler yourWebSocketHandler;
+
+    public WebSocketConfig(YourWebSocketHandler yourWebSocketHandler) {
+        this.yourWebSocketHandler = yourWebSocketHandler;
+    }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
@@ -15,8 +22,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
         if (frontendUrl == null || frontendUrl.isEmpty()) {
             frontendUrl = "http://localhost:5173";
         }
-        registry.addHandler(new YourWebSocketHandler(), "/ws")
-                .setAllowedOrigins(frontendUrl);
+        registry.addHandler(yourWebSocketHandler, "/ws")
+                //.setAllowedOrigins(frontendUrl);
+                .setAllowedOrigins("*");
     }
 }
 
