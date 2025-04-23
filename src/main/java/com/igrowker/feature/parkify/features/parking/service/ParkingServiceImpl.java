@@ -95,18 +95,7 @@ public class ParkingServiceImpl implements ParkingService {
                 .orElseThrow(() -> new OwnerNotFoundException(
                         "Owner not found with id: " + parking.getOwnerId()
                 ));
-        return ParkingDetailsResponse.builder()
-                .id(parking.getId().toString())
-                .name(parking.getName())
-                .address(parking.getAddress())
-                .location(new LocationDto(parking.getLatitude(), parking.getLongitude()))
-                .description(parking.getDescription())
-                .capacity(parking.getCapacity())
-                .currentAvailability(ofNullable(parking.getAvailableSpots()).orElse(0))
-                .hourlyRate(parking.getHourlyRate())
-                .workingHours(parking.getWorkingHours())
-                .ownerId(owner.getId().toString())
-                .build();
+        return mapParkingToDetailsResponse(parking, owner);
     }
 
     @Override
@@ -127,6 +116,8 @@ public class ParkingServiceImpl implements ParkingService {
                 .workingHours(request.getWorkingHours())
                 .ownerId(owner.getId())
                 .availableSpots(request.getCapacity())
+                .parkingPhone(request.getParkingPhone())
+                .parkingImageUrl(request.getParkingImageUrl())
                 .build();
         final Parking savedParking = parkingRepository.save(parking);
 
@@ -202,6 +193,8 @@ public class ParkingServiceImpl implements ParkingService {
                             .hourlyRate(p.getHourlyRate())
                             .currentAvailability(availability)
                             .distance(pwd.distance())
+                            .parkingPhone(p.getParkingPhone())
+                            .parkingImageUrl(p.getParkingImageUrl())
                             .build();
                 })
                 .toList();
@@ -267,6 +260,8 @@ public class ParkingServiceImpl implements ParkingService {
                 .hourlyRate(parking.getHourlyRate())
                 .workingHours(parking.getWorkingHours())
                 .ownerId(owner.getId())
+                .parkingPhone(parking.getParkingPhone())
+                .parkingImageUrl(parking.getParkingImageUrl())
                 .build();
     }
 
@@ -318,6 +313,8 @@ public class ParkingServiceImpl implements ParkingService {
                 .hourlyRate(parking.getHourlyRate())
                 .workingHours(parking.getWorkingHours())
                 .ownerId(owner.getId().toString())
+                .parkingPhone(parking.getParkingPhone())
+                .parkingImageUrl(parking.getParkingImageUrl())
                 .build();
     }
 
