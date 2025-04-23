@@ -1,5 +1,6 @@
 package com.igrowker.feature.parkify.features.parking.service;
 
+import com.igrowker.feature.parkify.exception.InvalidAvailabilityException;
 import com.igrowker.feature.parkify.exception.OwnerNotFoundException;
 import com.igrowker.feature.parkify.exception.ParkingNotFoundException;
 import com.igrowker.feature.parkify.features.auth.entities.AuthUser;
@@ -18,7 +19,9 @@ import com.igrowker.feature.parkify.features.parking.entities.Parking;
 import com.igrowker.feature.parkify.features.parking.repository.ParkingRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +33,7 @@ import static java.util.Optional.ofNullable;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ParkingServiceImpl implements ParkingService {
 
     private static final String AUTHENTICATED_OWNER_NOT_FOUND_WITH_EMAIL
@@ -62,10 +66,10 @@ public class ParkingServiceImpl implements ParkingService {
     @Override
     public ParkingResponse updateAvailability(ParkingRequest request) {
         Parking parking = parkingRepository.findById(request.getParkingId())
-                .orElseThrow(() -> new RuntimeException("Parking not found"));
+                .orElseThrow(() -> new ParkingNotFoundException("Parking not found"));
 
         if (request.getAvailableSpots() < 0) {
-            throw new IllegalArgumentException("Available spots cannot be negative");
+            throw new InvalidAvailabilityException("Available spots cannot be negative");
         }
 
         parking.setAvailableSpots(request.getAvailableSpots());
@@ -238,10 +242,13 @@ public class ParkingServiceImpl implements ParkingService {
                         "Parking not found for owner with email: " + ownerEmail
                 ));
         if (availableSpots > parking.getCapacity()) {
-            throw new IllegalArgumentException(
+            throw new InvalidAvailabilityException(
                     String.format("Available spots (%d) cannot exceed capacity (%d)",
                             availableSpots, parking.getCapacity())
             );
+        }
+        if (availableSpots < 0) {
+            throw new InvalidAvailabilityException("Available spots cannot be negative.");
         }
         parking.setAvailableSpots(availableSpots);
         parkingRepository.save(parking);
@@ -325,12 +332,12 @@ public class ParkingServiceImpl implements ParkingService {
     @Transactional(readOnly = true)
     public OwnerParkingDetailsResponse getOwnerWithParking(String ownerEmail) {
         AuthUser owner = authUserRepository.findByEmail(ownerEmail)
-                .orElseThrow(() -> new RuntimeException("Owner not found"));
+                .orElseThrow(() -> new OwnerNotFoundException("Owner not found"));
 
         List<Parking> parkings = parkingRepository.findByOwnerId(owner.getId());
 
         if (parkings.isEmpty()) {
-            throw new RuntimeException("Parking not found for owner");
+            throw new ParkingNotFoundException("Parking not found for owner");
         }
 
         // Si tienes varios parkings y solo quieres el primero
@@ -372,6 +379,87 @@ public class ParkingServiceImpl implements ParkingService {
                 .parkingPhone(parking.getParkingPhone())
                 .parkingImageUrl(parking.getParkingImageUrl())
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ParkingSummaryResponse> getMyParkingSummaries(String ownerEmail) {
+        final AuthUser owner = authUserRepository.findByEmail(ownerEmail)
+                .orElseThrow(() -> new OwnerNotFoundException(
+                        AUTHENTICATED_OWNER_NOT_FOUND_WITH_EMAIL + ownerEmail
+                ));
+
+        final List<Parking> parkings = parkingRepository.findByOwnerId(owner.getId());
+
+        return parkings.stream()
+                .map(this::mapParkingToSummaryResponse)
+                .collect(Collectors.toList());
+    }
+
+    private ParkingSummaryResponse mapParkingToSummaryResponse(Parking parking) {
+        return ParkingSummaryResponse.builder()
+                .id(parking.getId().toString())
+                .name(parking.getName())
+                .address(parking.getAddress())
+                .location(new LocationDto(parking.getLatitude(), parking.getLongitude()))
+                .currentAvailability(ofNullable(parking.getAvailableSpots()).orElse(0))
+                .hourlyRate(parking.getHourlyRate())
+                .parkingPhone(parking.getParkingPhone())
+                .parkingImageUrl(parking.getParkingImageUrl())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public ParkingAvailabilityResponse updateSpecificParkingAvailability(
+            String ownerEmail, Long parkingId, Integer availableSpots) {
+
+        log.info("Attempting to update availability for parking ID {} by owner {}", parkingId, ownerEmail);
+
+        final AuthUser owner = authUserRepository.findByEmail(ownerEmail)
+                .orElseThrow(() -> {
+                    log.error("Authenticated owner not found in DB: {}", ownerEmail);
+                    return new OwnerNotFoundException(AUTHENTICATED_OWNER_NOT_FOUND_WITH_EMAIL + ownerEmail);
+                });
+
+        final Parking parking = parkingRepository.findById(parkingId)
+                .orElseThrow(() -> {
+                    log.warn("Parking not found with ID: {}", parkingId);
+                    return new ParkingNotFoundException("Parking not found with id: " + parkingId);
+                });
+
+        if (!parking.getOwnerId().equals(owner.getId())) {
+            log.warn("Access denied: Owner {} attempted to modify parking {} owned by {}",
+                    ownerEmail, parkingId, parking.getOwnerId());
+            throw new AccessDeniedException(String.format(
+                    "User %s is not authorized to modify parking with id %d", ownerEmail, parkingId
+            ));
+        }
+
+        if (availableSpots == null) {
+            log.warn("Update failed for parking {}: availableSpots is null", parkingId);
+            throw new InvalidAvailabilityException("Available spots cannot be null.");
+        }
+        if (availableSpots < 0) {
+            log.warn("Update failed for parking {}: availableSpots {} is negative", parkingId, availableSpots);
+            throw new InvalidAvailabilityException("Available spots cannot be negative.");
+        }
+        if (availableSpots > parking.getCapacity()) {
+            log.warn("Update failed for parking {}: availableSpots {} exceeds capacity {}",
+                    parkingId, availableSpots, parking.getCapacity());
+            throw new InvalidAvailabilityException(
+                    String.format("Available spots (%d) cannot exceed capacity (%d)",
+                            availableSpots, parking.getCapacity())
+            );
+        }
+
+        log.info("Updating parking {} availability from {} to {}",
+                parkingId, parking.getAvailableSpots(), availableSpots);
+        parking.setAvailableSpots(availableSpots);
+        parkingRepository.save(parking);
+
+        log.info("Successfully updated availability for parking {}", parkingId);
+        return new ParkingAvailabilityResponse(parking.getId(), parking.getAvailableSpots());
     }
 
     private record ParkingWithDistance(Parking parking, double distance) {

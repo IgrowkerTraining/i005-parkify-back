@@ -9,6 +9,7 @@ import com.igrowker.feature.parkify.features.parking.dto.response.PaginatedParki
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingDetailsResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingSummaryResponse;
 import com.igrowker.feature.parkify.features.parking.service.ParkingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -286,6 +287,42 @@ public class ParkingController {
     }
 
     @Operation(
+            summary = "Get List of My Parkings",
+            description = "Retrieves a list of summaries for all parking facilities associated " +
+                    "with the currently authenticated OWNER."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of owner's parkings retrieved successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    type = "array",
+                                    implementation = ParkingSummaryResponse.class
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden (Not an OWNER)"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Owner not found (should not happen if authenticated)"
+            )
+    })
+    @GetMapping("/my-list")
+    public ResponseEntity<List<ParkingSummaryResponse>> getMyParkingList(Authentication authentication) {
+        String ownerEmail = authentication.getName();
+        List<ParkingSummaryResponse> parkingList = parkingService.getMyParkingSummaries(ownerEmail); // Новый метод сервиса
+        return ResponseEntity.ok(parkingList);
+    }
+
+    @Operation(
             summary = "Delete My Parking",
             description = "Allows the authenticated owner to delete their own parking facility."
     )
@@ -355,6 +392,48 @@ public class ParkingController {
         final String ownerEmail = authentication.getName();
         final ParkingAvailabilityResponse updatedAvailability = parkingService
                 .updateMyParkingAvailability(ownerEmail, request.availableSpots());
+        return ResponseEntity.ok(updatedAvailability);
+    }
+
+    @Operation(
+            summary = "Update Specific Parking Availability",
+            description = "Allows the authenticated owner to update the available spots for a specific parking identified by its ID."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Availability updated successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request data (negative spots, exceeds capacity)"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden (User is not the owner of this parking)"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Parking or Owner not found"
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error"
+            )
+    })
+    @PatchMapping("/{parkingId}/availability")
+    public ResponseEntity<ParkingAvailabilityResponse> updateSpecificParkingAvailability(
+            @PathVariable Long parkingId,
+            @Valid @RequestBody UpdateAvailabilityRequest request,
+            Authentication authentication) {
+        String ownerEmail = authentication.getName();
+        ParkingAvailabilityResponse updatedAvailability = parkingService.updateSpecificParkingAvailability(
+                ownerEmail, parkingId, request.availableSpots()
+        );
         return ResponseEntity.ok(updatedAvailability);
     }
 

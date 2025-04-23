@@ -1,5 +1,6 @@
 package com.igrowker.feature.parkify.features.auth.service;
 
+import com.igrowker.feature.parkify.exception.EmailAlreadyExistsException;
 import com.igrowker.feature.parkify.features.auth.dto.request.LoginRequest;
 import com.igrowker.feature.parkify.features.auth.dto.request.RegisterRequest;
 import com.igrowker.feature.parkify.features.auth.dto.response.LoginResponse;
@@ -48,7 +49,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public RegisterResponse register(RegisterRequest request) {
         if (authUserRepository.findByEmail(request.email()).isPresent()) {
-            throw new RuntimeException("Email is already in use");
+            throw new EmailAlreadyExistsException("Email is already in use" + request.email());
         }
 
         AuthUser newUser = new AuthUser();
