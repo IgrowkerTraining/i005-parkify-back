@@ -8,15 +8,15 @@ Servicio backend para la aplicación Parkify, que proporciona una API para gesti
 
 *   [Requisitos Previos](#-requisitos-previos)
 *   [Inicio Rápido (Docker Compose)](#-inicio-rápido-docker-compose)
-    *   [Configuración](#️-configuración)
-    *   [Ejecución](#️-ejecución)
-    *   [Detención](#️-detención)
+    *   [Configuración](#-configuración)
+    *   [Ejecución](#-ejecución)
+    *   [Detención](#-detención)
     *   [Visualización de Logs](#-visualización-de-logs)
     *   [Acceso a la Base de Datos](#-acceso-a-la-base-de-datos)
 *   [Documentación de la API (Swagger)](#-documentación-de-la-api-swagger)
 *   [Ejecución de Pruebas (Tests)](#-ejecución-de-pruebas-tests)
 *   [Variables de Entorno (`.env`)](#-variables-de-entorno-env)
-*   [Stack Tecnológico](#️-stack-tecnológico)
+*   [Stack Tecnológico](#-stack-tecnológico)
 *   [Licencia](#-licencia)
 
 ## 📦 Requisitos Previos
