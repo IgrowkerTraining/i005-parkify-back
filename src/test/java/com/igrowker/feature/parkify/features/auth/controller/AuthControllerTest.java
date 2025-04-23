@@ -40,27 +40,23 @@ class AuthControllerTest {
 
     private LoginRequest loginRequest;
     private final String testToken = "mockJwtToken123";
+    private final String testEmail = "test@example.com";
     private RegisterRequest registerRequest;
-    private RegisterResponse registerResponse;
 
     @BeforeEach
     void setUp() {
-        loginRequest = new LoginRequest("test@example.com", "password");
+        loginRequest = new LoginRequest(testEmail, "password");
 
         registerRequest = new RegisterRequest(
                 "kris", "kris@example.com", "Password",
                 "role", "0123456789"
                 );
-
-        registerResponse = new RegisterResponse(
-                "Token123"
-
-        );
     }
 
     @Test
     void login_Success_ShouldReturnOkWithToken() {
-        when(authService.login(any(LoginRequest.class))).thenReturn(testToken);
+        when(authService.login(any(LoginRequest.class)))
+                .thenReturn(new LoginResponse(testToken, testEmail));
 
         final ResponseEntity<LoginResponse> response = authController.login(loginRequest);
 
@@ -68,7 +64,7 @@ class AuthControllerTest {
                 () -> assertNotNull(response),
                 () -> assertEquals(HttpStatus.OK, response.getStatusCode()),
                 () -> assertNotNull(response.getBody()),
-                () -> assertEquals(testToken, response.getBody().getToken())
+                () -> assertEquals(testToken, response.getBody().token())
         );
         verify(authService, times(1)).login(loginRequest);
     }

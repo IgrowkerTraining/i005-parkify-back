@@ -1,12 +1,19 @@
 package com.igrowker.feature.parkify.features.auth.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class LoginResponse {
-    private String token;
-}
+@Schema(description = "Response after successful login, containing JWT token, user email, and role")
+public record LoginResponse(
+
+        @Schema(
+                description = "JWT token for authenticated session",
+                example = "eyJhbGciOiJIUzI1NiJ9..."
+        )
+        String token,
+
+        @Schema(
+                description = "Email of the logged-in user",
+                example = "owner@example.com"
+        )
+        String email
+) {}
