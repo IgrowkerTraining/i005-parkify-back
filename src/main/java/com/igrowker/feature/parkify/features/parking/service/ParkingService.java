@@ -9,6 +9,7 @@ import com.igrowker.feature.parkify.features.parking.dto.response.PaginatedParki
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingDetailsResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingResponse;
+import com.igrowker.feature.parkify.features.parking.dto.response.ParkingSummaryResponse;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -85,6 +86,22 @@ public interface ParkingService {
 
     ParkingDetailsResponse getMyParkingDetails(String ownerEmail);
 
+    /**
+     * Retrieves summaries for all parkings owned by the specified owner.
+     *
+     * @param ownerEmail The email of the authenticated owner.
+     * @return A list of parking summaries, or an empty list if the owner has no parkings.
+     * @throws OwnerNotFoundException if the owner is not found.
+     */
+    List<ParkingSummaryResponse> getMyParkingSummaries(String ownerEmail);
+
+    ParkingAvailabilityResponse updateSpecificParkingAvailability(
+            String ownerEmail,
+            Long parkingId,
+            @NotNull(message = "Available spots cannot be null")
+            @PositiveOrZero(message = "Available spots must be zero or positive")
+            Integer integer
+    );
 }
 
 
