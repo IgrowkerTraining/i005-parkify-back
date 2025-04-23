@@ -8,6 +8,7 @@ import com.igrowker.feature.parkify.features.auth.repository.AuthUserRepository;
 import com.igrowker.feature.parkify.features.parking.dto.LocationDto;
 import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
+import com.igrowker.feature.parkify.features.parking.dto.request.UpdateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.response.OwnerParkingDetailsResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.PaginatedParkingResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.PaginationInfo;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
@@ -460,6 +462,95 @@ public class ParkingServiceImpl implements ParkingService {
 
         log.info("Successfully updated availability for parking {}", parkingId);
         return new ParkingAvailabilityResponse(parking.getId(), parking.getAvailableSpots());
+    }
+
+    @Override
+    @Transactional
+    public ParkingResponse updateMyParking(String ownerEmail, Long parkingId, @Valid UpdateMyParkingRequest request) {
+        log.info("Attempting to update parking ID {} for owner {}", parkingId, ownerEmail);
+
+        // 1. Найти владельца
+        final AuthUser owner = findOwnerByEmail(ownerEmail);
+
+        // 2. Найти парковку по ID
+        final Parking parking = findParkingById(parkingId);
+
+        // 3. Проверить владение
+        ensureOwnership(owner, parking, ownerEmail);
+
+        // 4. Обновить поля парковки (кроме capacity и availableSpots пока)
+        updateParkingFields(parking, request);
+
+        // 5. Обработать изменение Capacity с валидацией
+        updateCapacityIfNeeded(parking, request.capacity());
+
+        // 6. Сохранить
+        final Parking updatedParking = parkingRepository.save(parking);
+        log.info("Parking {} successfully updated by owner {}", updatedParking.getId(), ownerEmail);
+
+        // 7. Смапить в DTO ответа и вернуть
+        return mapToFlatParkingResponse(updatedParking, owner);
+    }
+
+    // --- Вспомогательные приватные методы для улучшения читаемости updateMyParking ---
+
+    private AuthUser findOwnerByEmail(String ownerEmail) {
+        return authUserRepository.findByEmail(ownerEmail)
+                .orElseThrow(() -> {
+                    log.warn("Owner not found: {}", ownerEmail);
+                    return new OwnerNotFoundException(AUTHENTICATED_OWNER_NOT_FOUND_WITH_EMAIL + ownerEmail);
+                });
+    }
+
+    private Parking findParkingById(Long parkingId) {
+        return parkingRepository.findById(parkingId)
+                .orElseThrow(() -> {
+                    log.warn("Parking not found with ID: {}", parkingId);
+                    return new ParkingNotFoundException("Parking not found with id: " + parkingId);
+                });
+    }
+
+    private void ensureOwnership(AuthUser owner, Parking parking, String ownerEmailForLogging) {
+        if (!parking.getOwnerId().equals(owner.getId())) {
+            log.warn("Access denied: Owner {} (ID {}) attempted to modify parking {} which belongs to owner ID {}",
+                    ownerEmailForLogging, owner.getId(), parking.getId(), parking.getOwnerId());
+            throw new AccessDeniedException(String.format(
+                    "User %s is not authorized to modify parking with id %d", ownerEmailForLogging, parking.getId()
+            ));
+        }
+    }
+
+    private void updateParkingFields(Parking parking, UpdateMyParkingRequest request) {
+        parking.setName(request.name());
+        parking.setAddress(request.address());
+        parking.setLatitude(request.latitude());
+        parking.setLongitude(request.longitude());
+        parking.setDescription(request.description());
+        parking.setHourlyRate(request.hourlyRate());
+        parking.setWorkingHours(request.workingHours());
+        parking.setParkingPhone(request.parkingPhone());
+        parking.setParkingImageUrl(request.parkingImageUrl());
+    }
+
+    private void updateCapacityIfNeeded(Parking parking, Integer newCapacity) {
+        // Проверяем, только если capacity действительно изменилась
+        if (!parking.getCapacity().equals(newCapacity)) {
+            Integer currentAvailable = Optional.ofNullable(parking.getAvailableSpots())
+                    .orElse(parking.getCapacity()); // Используем capacity, если available null
+
+            if (currentAvailable > newCapacity) {
+                log.warn("Capacity update failed for parking {}: requested capacity {} < current available {}",
+                        parking.getId(), newCapacity, currentAvailable);
+                throw new IllegalArgumentException(
+                        String.format("Cannot set capacity (%d) lower than current available spots (%d). Please update available spots first.",
+                                newCapacity, currentAvailable)
+                );
+            }
+            parking.setCapacity(newCapacity);
+            log.debug("Parking {} capacity updated to {}", parking.getId(), newCapacity);
+        } else {
+            log.debug("Capacity for parking {} not changed (remains {}). Skipping validation.", parking.getId(), newCapacity);
+        }
     }
 
     private record ParkingWithDistance(Parking parking, double distance) {

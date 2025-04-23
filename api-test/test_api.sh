@@ -246,6 +246,203 @@ curl -v -X PATCH "$BASE_URL/parkings/${PARKING_ID_1}/availability" \
      -o response.body 2> curl_output.log
 check_status curl_output.log 400 "Actualización de disponibilidad P1 (> capacidad)"
 
+# === Preparación para Prueba de Seguridad PUT: Crear Segundo Propietario y su Parking ===
+
+section_header "2.prep Preparación: Segundo Propietario y Parking"
+
+# --- Variables para el Segundo Propietario ---
+OWNER_EMAIL_2="curl_owner2_$(date +%s%N)@example.com"
+OWNER_PASSWORD_2="password456"
+TOKEN_2=""
+PARKING_ID_OWNER_2=""
+
+echo "[INFO] Registrando segundo propietario: $OWNER_EMAIL_2"
+rm -f response.body curl_output.log
+curl -v -X POST "$BASE_URL/auth/register" \
+     -H "Content-Type: application/json" \
+     -d "{\"email\": \"$OWNER_EMAIL_2\", \"password\": \"$OWNER_PASSWORD_2\", \"username\": \"Curl Test Owner 2\", \"role\": \"OWNER\", \"contactPhone\": \"999999999\"}" \
+     -o response.body 2> curl_output.log
+check_status curl_output.log 201 "Registro del Segundo Propietario"
+
+echo "[INFO] Iniciando sesión como segundo propietario: $OWNER_EMAIL_2"
+RESPONSE_BODY_2=$(curl -s -X POST "$BASE_URL/auth/login" \
+     -H "Content-Type: application/json" \
+     -d "{\"email\": \"$OWNER_EMAIL_2\", \"password\": \"$OWNER_PASSWORD_2\"}")
+TOKEN_2=$(echo $RESPONSE_BODY_2 | jq -r '.token // empty')
+
+if [ -z "$TOKEN_2" ] || [ "$TOKEN_2" == "null" ]; then
+    echo "[ERROR] No se pudo obtener el token para el Propietario 2. Saltando creación de su parking."
+else
+    echo "[OK] Token obtenido para Propietario 2."
+    echo "[INFO] Creando parking para el Propietario 2 (usando TOKEN_2)"
+    PARKING_DATA_OWNER_2=$(cat <<EOF
+{
+    "name": "Parking del Propietario 2",
+    "address": "2 Otra Calle",
+    "latitude": 41.0,
+    "longitude": -4.0,
+    "description": "Parking perteneciente al segundo propietario",
+    "capacity": 5,
+    "hourlyRate": 3.0,
+    "workingHours": "09:00-19:00",
+    "parkingPhone": "888888",
+    "parkingImageUrl": "http://example.com/owner2_parking.jpg"
+}
+EOF
+)
+    CREATE_RESPONSE_OWNER_2=$(echo "$PARKING_DATA_OWNER_2" | curl -s -X POST "$BASE_URL/parkings/my" \
+         -H "Authorization: Bearer $TOKEN_2" \
+         -H "Content-Type: application/json" \
+         -d @-)
+    PARKING_ID_OWNER_2=$(echo $CREATE_RESPONSE_OWNER_2 | jq -r '.id // empty')
+
+    if [ -z "$PARKING_ID_OWNER_2" ] || [ "$PARKING_ID_OWNER_2" == "null" ]; then
+        echo "[ERROR] No se pudo crear el parking para el Propietario 2."
+    else
+        echo "[OK] Parking para Propietario 2 creado, ID: $PARKING_ID_OWNER_2"
+    fi
+fi
+
+# --- Fin de la preparación ---
+
+# === Flujo del Propietario: Actualización PUT de Parking Específico (por ID) ===
+
+section_header "2.bis Flujo de Actualización PUT del Parking Específico (por ID)"
+
+# --- Pre-requisitos: Necesitamos TOKEN (Propietario 1) y PARKING_ID_1 ---
+if [ -z "$TOKEN" ] || [ "$TOKEN" == "null" ] || [ -z "$PARKING_ID_1" ] || [ "$PARKING_ID_1" == "null" ]; then
+    echo "[OMITIDO] Saltando pruebas PUT por ID: Falta TOKEN (Propietario 1) o PARKING_ID_1."
+else
+    echo "[INFO] Usando TOKEN (Propietario 1) y PARKING_ID: $PARKING_ID_1 para pruebas PUT por ID."
+
+    # --- Datos para la actualización PUT (para PARKING_ID_1) ---
+    UPDATE_DATA=$(cat <<EOF
+{
+    "name": "Parking 1 Actualizado Curl",
+    "address": "1 Calle Curl Actualizada",
+    "latitude": ${SEARCH_LAT},
+    "longitude": ${SEARCH_LON},
+    "description": "Descripción Actualizada vía PUT",
+    "capacity": 18,
+    "hourlyRate": 5.0,
+    "workingHours": "08:00-20:00 Actualizado",
+    "parkingPhone": "111-ACTUALIZADO",
+    "parkingImageUrl": "http://example.com/image1_actualizada.jpg"
+}
+EOF
+)
+    echo "[INFO] Datos para la actualización PUT exitosa (ID: $PARKING_ID_1):"
+    echo "$UPDATE_DATA" | jq '.'
+
+    INVALID_CAP_DATA=$(cat <<EOF
+{
+    "name": "Parking Capacidad Inválida",
+    "address": "Calle Cap Inválida",
+    "latitude": ${SEARCH_LAT},
+    "longitude": ${SEARCH_LON},
+    "description": "Probando capacidad inválida",
+    "capacity": 5,
+    "hourlyRate": 5.5,
+    "workingHours": "09:00-17:00",
+    "parkingPhone": "cap-invalida",
+    "parkingImageUrl": "http://example.com/cap_invalida.jpg"
+}
+EOF
+)
+    echo "[INFO] Datos para la actualización con capacity inválida (< plazas disponibles) (ID: $PARKING_ID_1):"
+    echo "$INVALID_CAP_DATA" | jq '.'
+
+
+    # --- Inicio de las pruebas PUT /{parkingId} ---
+    echo -e "\n[2.bis.1 Negativo: Actualización PUT /{parkingId} sin Token (Esperado 403)]"
+    rm -f response.body curl_output.log
+    echo "$UPDATE_DATA" | curl -v -X PUT "$BASE_URL/parkings/$PARKING_ID_1" \
+         -H "Content-Type: application/json" \
+         -d @- \
+         -o response.body 2> curl_output.log
+    check_status curl_output.log 403 "Actualización PUT /{parkingId} sin token"
+
+    echo -e "\n[2.bis.2 Negativo: Actualización PUT /{parkingId} con Token Inválido (Esperado 403)]"
+    rm -f response.body curl_output.log
+    echo "$UPDATE_DATA" | curl -v -X PUT "$BASE_URL/parkings/$PARKING_ID_1" \
+         -H "Authorization: Bearer $INVALID_TOKEN" \
+         -H "Content-Type: application/json" \
+         -d @- \
+         -o response.body 2> curl_output.log
+    check_status curl_output.log 403 "Actualización PUT /{parkingId} con token inválido"
+
+    echo -e "\n[2.bis.3 Negativo: Actualización PUT /{parkingId} con Campo Obligatorio Faltante (name) (Esperado 400)]"
+    MISSING_NAME_DATA=$(echo "$UPDATE_DATA" | jq 'del(.name)')
+    echo "[INFO] Datos para la actualización sin el campo 'name' (ID: $PARKING_ID_1):"
+    echo "$MISSING_NAME_DATA" | jq '.'
+    rm -f response.body curl_output.log
+    echo "$MISSING_NAME_DATA" | curl -v -X PUT "$BASE_URL/parkings/$PARKING_ID_1" \
+         -H "Authorization: Bearer $TOKEN" \
+         -H "Content-Type: application/json" \
+         -d @- \
+         -o response.body 2> curl_output.log
+    check_status curl_output.log 400 "Actualización PUT /{parkingId} sin campo 'name'"
+    echo "Cuerpo de la respuesta (error de validación):"
+    cat response.body | jq '.details // .message // empty' || cat response.body
+
+    echo -e "\n[2.bis.4 Negativo: Actualización PUT /{parkingId} con Capacity < Plazas Disponibles (Esperado 400)]"
+    rm -f response.body curl_output.log
+    echo "$INVALID_CAP_DATA" | curl -v -X PUT "$BASE_URL/parkings/$PARKING_ID_1" \
+         -H "Authorization: Bearer $TOKEN" \
+         -H "Content-Type: application/json" \
+         -d @- \
+         -o response.body 2> curl_output.log
+    check_status curl_output.log 400 "Actualización PUT /{parkingId} con capacity < available"
+    echo "Cuerpo de la respuesta (error de capacity):"
+    cat response.body | jq '.message // empty' || cat response.body
+
+    echo -e "\n[2.bis.4.1 Negativo: Actualización PUT /{parkingId} de parking ajeno (Esperado 403)]"
+    # Intentamos actualizar el parking del Propietario 2 (PARKING_ID_OWNER_2) usando el token del Propietario 1 (TOKEN)
+    if [ ! -z "$PARKING_ID_OWNER_2" ] && [ "$PARKING_ID_OWNER_2" != "null" ]; then
+        rm -f response.body curl_output.log
+        echo "[INFO] Intentando actualizar parking ID $PARKING_ID_OWNER_2 (de Owner 2) con token de Owner 1."
+        # Usamos los datos válidos, el problema debe ser la autorización, no los datos
+        echo "$UPDATE_DATA" | curl -v -X PUT "$BASE_URL/parkings/$PARKING_ID_OWNER_2" \
+             -H "Authorization: Bearer $TOKEN" \
+             -H "Content-Type: application/json" \
+             -d @- \
+             -o response.body 2> curl_output.log
+        check_status curl_output.log 403 "Actualización PUT /{parkingId} de parking ajeno" # Esperamos 403 Forbidden
+    else
+        echo "[OMITIDO] No se pudo probar actualización de parking ajeno: Falta PARKING_ID_OWNER_2."
+    fi
+
+    echo -e "\n[2.bis.5 Positivo: Actualización PUT Exitosa del Parking Propio (ID: $PARKING_ID_1) (Esperado 200)]"
+    rm -f response.body curl_output.log
+    echo "$UPDATE_DATA" | curl -v -X PUT "$BASE_URL/parkings/$PARKING_ID_1" \
+         -H "Authorization: Bearer $TOKEN" \
+         -H "Content-Type: application/json" \
+         -d @- \
+         -o response.body 2> curl_output.log
+    check_status curl_output.log 200 "Actualización PUT exitosa para ID $PARKING_ID_1"
+    echo "[INFO] Cuerpo de la respuesta después del PUT exitoso:"
+    SUCCESSFUL_PUT_RESPONSE=$(cat response.body)
+    echo "$SUCCESSFUL_PUT_RESPONSE" | jq '.'
+
+    echo -e "\n[2.bis.6 Positivo: Verificación de Datos Actualizados vía GET /{parkingId}]"
+    rm -f response.body curl_output.log
+    curl -s -X GET "$BASE_URL/parkings/$PARKING_ID_1" \
+         -o response.body 2> curl_output.log
+
+    echo "[INFO] Datos del parking $PARKING_ID_1 después de la actualización (obtenidos vía GET /{parkingId}):"
+    UPDATED_PARKING_DETAILS=$(cat response.body)
+    echo "$UPDATED_PARKING_DETAILS" | jq '.'
+
+    # Verificación del nombre
+    UPDATED_NAME=$(echo "$UPDATED_PARKING_DETAILS" | jq -r '.name // empty')
+    EXPECTED_NAME="Parking 1 Actualizado Curl"
+    if [ "$UPDATED_NAME" == "$EXPECTED_NAME" ]; then
+        echo "[OK] Verificación del nombre después de la actualización: El nombre '$UPDATED_NAME' coincide con el esperado."
+    else
+        echo "[ERROR] Verificación del nombre después de la actualización: Se esperaba '$EXPECTED_NAME', se recibió '$UPDATED_NAME'."
+    fi
+
+fi # Fin del bloque de verificación de TOKEN y PARKING_ID_1
 
 # === Pruebas de Peticiones de Disponibilidad Múltiple (Batch) (con Pruebas Negativas) ===
 section_header "3. Pruebas de Peticiones de Disponibilidad Múltiple (Batch)"

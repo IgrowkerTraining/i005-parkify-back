@@ -47,6 +47,7 @@ public class SecurityConfig {
                                 antMatcher(HttpMethod.POST, PARKINGS_PATH + "/my"),
                                 antMatcher(HttpMethod.GET, PARKINGS_PATH + "/my"),
                                 antMatcher(HttpMethod.GET, PARKINGS_PATH + "/my"),
+                                antMatcher(HttpMethod.PUT, PARKINGS_PATH + "/{parkingId}"),
                                 antMatcher(HttpMethod.GET, PARKINGS_PATH + "/my-list"),
                                 antMatcher(HttpMethod.DELETE, PARKINGS_PATH + "/my"),
                                 antMatcher(HttpMethod.PATCH, PARKINGS_PATH + "/my/availability"),
