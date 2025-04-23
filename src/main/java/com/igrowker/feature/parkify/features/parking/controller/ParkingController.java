@@ -4,6 +4,7 @@ import com.igrowker.feature.parkify.exception.GlobalExceptionHandler;
 import com.igrowker.feature.parkify.features.parking.dto.request.CreateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.ParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.request.UpdateAvailabilityRequest;
+import com.igrowker.feature.parkify.features.parking.dto.request.UpdateMyParkingRequest;
 import com.igrowker.feature.parkify.features.parking.dto.response.OwnerParkingDetailsResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.PaginatedParkingResponse;
 import com.igrowker.feature.parkify.features.parking.dto.response.ParkingAvailabilityResponse;
@@ -435,6 +436,71 @@ public class ParkingController {
                 ownerEmail, parkingId, request.availableSpots()
         );
         return ResponseEntity.ok(updatedAvailability);
+    }
+
+    @Operation(
+            summary = "Update Specific Parking (PUT)",
+            description = "Allows an authenticated OWNER to completely update the editable " +
+                    "details of a specific parking facility identified by its ID. Requires " +
+                    "sending ALL editable fields."
+    )
+    @Parameter
+            (name = "parkingId",
+            description = "ID of the parking to update",
+            required = true, in = ParameterIn.PATH
+            )
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "Complete updated details for the parking", required = true,
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = UpdateMyParkingRequest.class)))
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Parking updated successfully",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ParkingResponse.class))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request data (validation error, e.g., capacity conflict)",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = GlobalExceptionHandler.ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized"),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden (Not an OWNER or not the owner of this parking)",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = GlobalExceptionHandler.ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Owner or Parking not found",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = GlobalExceptionHandler.ErrorResponse.class)
+                    )
+            )
+    })
+    @PutMapping("/{parkingId}")
+    public ResponseEntity<ParkingResponse> updateSpecificParking(
+            @PathVariable Long parkingId,
+            @Valid @RequestBody UpdateMyParkingRequest request,
+            Authentication authentication
+    ) {
+        final String ownerEmail = authentication.getName();
+        final ParkingResponse updatedParking = parkingService.updateMyParking(ownerEmail, parkingId, request);
+        return ResponseEntity.ok(updatedParking);
     }
 
 }
