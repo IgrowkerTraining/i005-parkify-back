@@ -2,6 +2,7 @@ package com.igrowker.feature.parkify.features.auth.service;
 
 import com.igrowker.feature.parkify.features.auth.dto.request.LoginRequest;
 import com.igrowker.feature.parkify.features.auth.dto.request.RegisterRequest;
+import com.igrowker.feature.parkify.features.auth.dto.response.LoginResponse;
 import com.igrowker.feature.parkify.features.auth.dto.response.RegisterResponse;
 import com.igrowker.feature.parkify.features.auth.dto.response.UserResponse;
 import com.igrowker.feature.parkify.features.auth.entities.AuthUser;
@@ -30,7 +31,8 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public String login(LoginRequest request) {
+    @Transactional(readOnly = true)
+    public LoginResponse login(LoginRequest request) {
         final UserDetails userDetails = (UserDetails) authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
                                 request.email(),
@@ -38,7 +40,9 @@ public class AuthServiceImpl implements AuthService {
                         )
                 )
                 .getPrincipal();
-        return jwtService.generateToken(userDetails);
+        final String email = userDetails.getUsername();
+        final String token = jwtService.generateToken(userDetails);
+        return new LoginResponse(token, email);
     }
 
     @Override
