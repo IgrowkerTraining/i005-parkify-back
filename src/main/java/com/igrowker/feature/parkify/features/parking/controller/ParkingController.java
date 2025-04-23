@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -143,6 +145,40 @@ public class ParkingController {
     (@PathVariable Long parkingId
     ) {
         ParkingAvailabilityResponse response = parkingService.getParkingAvailability(parkingId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "Get Availability for Multiple Parkings (Batch)",
+            description = "Retrieves the current availability for a list of specified parking IDs. Publicly accessible."
+    )
+    @Parameter(
+            name = "ids",
+            required = true,
+            description = "Comma-separated list of parking IDs",
+            example = "1,5,23"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Availability data retrieved successfully",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    type = "array",
+                                    implementation = ParkingAvailabilityResponse.class
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "400", description = "Invalid request (e.g., empty 'ids' parameter)",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = GlobalExceptionHandler.ErrorResponse.class)))
+    })
+    @GetMapping("/availability")
+    public ResponseEntity<List<ParkingAvailabilityResponse>> getParkingsAvailability(
+            @RequestParam @NotEmpty(message = "Parameter 'ids' cannot be empty") List<Long> ids
+    ) {
+        final List<ParkingAvailabilityResponse> response = parkingService.getParkingsAvailability(ids);
         return ResponseEntity.ok(response);
     }
 

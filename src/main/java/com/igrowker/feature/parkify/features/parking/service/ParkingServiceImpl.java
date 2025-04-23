@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 
@@ -231,6 +232,22 @@ public class ParkingServiceImpl implements ParkingService {
     ) {
         return null;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ParkingAvailabilityResponse> getParkingsAvailability(
+            List<Long> parkingIds
+    ) {
+        final List<Parking> foundParkings = parkingRepository.findAllById(parkingIds);
+
+        return foundParkings.stream()
+                .map(parking -> new ParkingAvailabilityResponse(
+                        parking.getId(),
+                        ofNullable(parking.getAvailableSpots()).orElse(0)
+                ))
+                .toList();
+    }
+
 
     @Override
     @Transactional(readOnly = true)

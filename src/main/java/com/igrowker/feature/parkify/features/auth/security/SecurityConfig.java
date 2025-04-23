@@ -70,6 +70,7 @@ public class SecurityConfig {
                                 antMatcher(HttpMethod.GET, PARKINGS_PATH),
                                 antMatcher(HttpMethod.GET, PARKINGS_PATH + "/{parkingId}"),
                                 antMatcher(HttpMethod.GET, PARKINGS_PATH + "/{parkingId}/availability"),
+                                antMatcher(HttpMethod.GET, PARKINGS_PATH + "/availability"),
                                 antMatcher(HttpMethod.GET, CONFIG_PATH + "/initial"),
                                 antMatcher(HttpMethod.GET, "/api/v1/features"),
                                 antMatcher(HttpMethod.GET, "/api/v1/features/**"),
