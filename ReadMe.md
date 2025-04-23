@@ -10,7 +10,7 @@ Servicio backend para la aplicación Parkify, que proporciona una API para gesti
 *   [Inicio Rápido (Docker Compose)](#-inicio-rápido-docker-compose)
     *   [Configuración](#-configuración)
     *   [Ejecución](#-ejecución)
-    *   [Detención](#-detención)
+    *   [Detención](#-detención-y-Gestión-de-Contenedores)
     *   [Visualización de Logs](#-visualización-de-logs)
     *   [Acceso a la Base de Datos](#-acceso-a-la-base-de-datos)
 *   [Documentación de la API (Swagger)](#-documentación-de-la-api-swagger)
