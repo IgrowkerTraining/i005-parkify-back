@@ -58,6 +58,16 @@ public interface ParkingService {
             Integer availableSpots
     );
 
+    /**
+     * Deletes the parking facility associated with the given owner.
+     * Assumes an owner has at most one parking for simplicity in MVP.
+     *
+     * @param ownerEmail The email of the authenticated owner.
+     * @throws OwnerNotFoundException if the owner is not found.
+     * @throws ParkingNotFoundException if the owner has no associated parking to delete.
+     */
+    void deleteMyParking(String ownerEmail);
+
     ParkingDetailsResponse getMyParkingDetails(String ownerEmail);
 
 }

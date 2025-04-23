@@ -46,6 +46,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 antMatcher(HttpMethod.POST, PARKINGS_PATH + "/my"),
                                 antMatcher(HttpMethod.GET, PARKINGS_PATH + "/my"),
+                                antMatcher(HttpMethod.GET, PARKINGS_PATH + "/my"),
+                                antMatcher(HttpMethod.DELETE, PARKINGS_PATH + "/my"),
                                 antMatcher(HttpMethod.PATCH, PARKINGS_PATH + "/my/availability"),
                                 antMatcher(HttpMethod.PUT, PARKINGS_PATH + "/{parkingId}/features/{featureSlug}"),
                                 antMatcher(HttpMethod.DELETE, PARKINGS_PATH + "/{parkingId}/features/{featureSlug}"),

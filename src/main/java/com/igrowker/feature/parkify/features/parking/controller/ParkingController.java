@@ -26,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -246,6 +247,39 @@ public class ParkingController {
         final String ownerEmail = authentication.getName();
         final ParkingDetailsResponse response = parkingService.getMyParkingDetails(ownerEmail);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "Delete My Parking",
+            description = "Allows the authenticated owner to delete their own parking facility."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Parking deleted successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized"
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Forbidden (Not an OWNER)"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Owner or their parking not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = GlobalExceptionHandler.ErrorResponse.class)
+                    )
+            )
+    })
+    @DeleteMapping("/my")
+    public ResponseEntity<Void> deleteMyParking(Authentication authentication) {
+        String ownerEmail = authentication.getName();
+        parkingService.deleteMyParking(ownerEmail);
+        return ResponseEntity.noContent().build();
     }
 
     // #27
