@@ -52,16 +52,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleEmailAlreadyExistsException(
             EmailAlreadyExistsException ex, HttpServletRequest request
     ) {
-        log.warn("Registration attempt with existing email for request [{}]: {}",
-                request.getRequestURI(), ex.getMessage());
         final ErrorResponse errorResponse = new ErrorResponse(
                 Instant.now(),
-                HttpStatus.CONFLICT.value(),
-                HttpStatus.CONFLICT.getReasonPhrase(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
-        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler({InvalidAvailabilityException.class, IllegalArgumentException.class})
@@ -224,7 +222,7 @@ public class GlobalExceptionHandler {
                 Instant.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "El correo electrónico ya está registrado.",
+                "Ocurrió un error inesperado. Intenta nuevamente.",
                 request.getRequestURI()
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
