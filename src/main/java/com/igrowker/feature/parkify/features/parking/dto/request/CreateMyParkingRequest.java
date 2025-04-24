@@ -8,9 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -33,4 +30,6 @@ public class CreateMyParkingRequest {
     @PositiveOrZero(message = "Hourly rate must be zero or positive")
     private Double hourlyRate;
     private String workingHours;
+    private String parkingPhone;
+    private String parkingImageUrl;
 }

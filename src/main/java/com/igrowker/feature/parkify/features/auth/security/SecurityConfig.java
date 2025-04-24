@@ -45,11 +45,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 antMatcher(HttpMethod.POST, PARKINGS_PATH + "/my"),
-                                antMatcher(HttpMethod.GET, PARKINGS_PATH + "/my"), // <-- Наше правило
+                                antMatcher(HttpMethod.GET, PARKINGS_PATH + "/my"),
+                                antMatcher(HttpMethod.GET, PARKINGS_PATH + "/my"),
+                                antMatcher(HttpMethod.PUT, PARKINGS_PATH + "/{parkingId}"),
+                                antMatcher(HttpMethod.GET, PARKINGS_PATH + "/my-list"),
+                                antMatcher(HttpMethod.DELETE, PARKINGS_PATH + "/my"),
                                 antMatcher(HttpMethod.PATCH, PARKINGS_PATH + "/my/availability"),
                                 antMatcher(HttpMethod.PUT, PARKINGS_PATH + "/{parkingId}/features/{featureSlug}"),
                                 antMatcher(HttpMethod.DELETE, PARKINGS_PATH + "/{parkingId}/features/{featureSlug}"),
-                                antMatcher(HttpMethod.GET, PARKINGS_PATH + "/owner/parking") // Если остается
+                                antMatcher(HttpMethod.GET, PARKINGS_PATH + "/owner/parking"),
+                                antMatcher(HttpMethod.PATCH, "/api/v1/parkings/my/availability")
                         ).hasRole(OWNER_ROLE)
                         .requestMatchers(
                                 antMatcher(HttpMethod.POST, BOOKINGS_PATH)
@@ -70,6 +75,7 @@ public class SecurityConfig {
                                 antMatcher(HttpMethod.GET, PARKINGS_PATH),
                                 antMatcher(HttpMethod.GET, PARKINGS_PATH + "/{parkingId}"),
                                 antMatcher(HttpMethod.GET, PARKINGS_PATH + "/{parkingId}/availability"),
+                                antMatcher(HttpMethod.GET, PARKINGS_PATH + "/availability"),
                                 antMatcher(HttpMethod.GET, CONFIG_PATH + "/initial"),
                                 antMatcher(HttpMethod.GET, "/api/v1/features"),
                                 antMatcher(HttpMethod.GET, "/api/v1/features/**"),

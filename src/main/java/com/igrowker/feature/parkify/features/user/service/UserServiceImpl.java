@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 public class UserServiceImpl implements UserService {
     private final AuthUserRepository authUserRepository;
     @Override
+    @Deprecated(since = "2024-04-23", forRemoval = true)
     public void updateUserLocation(String email, LocationUpdateRequest request) {
         log.info("Updating location for user: {}", email);
         AuthUser user = authUserRepository.findByEmail(email)

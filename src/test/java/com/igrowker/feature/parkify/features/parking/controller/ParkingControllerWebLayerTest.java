@@ -373,7 +373,7 @@ class ParkingControllerWebLayerTest {
                     .capacity(10) .hourlyRate(1.0) .build();
             final String genericErrorMessage = "Unexpected database error";
             when(parkingService.createMyParking(any(CreateMyParkingRequest.class), eq(MOCK_OWNER_EMAIL)))
-                    .thenThrow(new RuntimeException(genericErrorMessage));
+                    .thenThrow(new RuntimeException("Unexpected database error"));
 
             mockMvc.perform(post("/api/v1/parkings/my")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -382,7 +382,7 @@ class ParkingControllerWebLayerTest {
                     .andExpect(status().isInternalServerError())
                     .andExpect(jsonPath("$.status", is(500)))
                     .andExpect(jsonPath("$.error", is("Internal Server Error")))
-                    .andExpect(jsonPath("$.message", is("An unexpected error occurred")))
+                    .andExpect(jsonPath("$.message", is("Ocurrió un error inesperado. Intenta nuevamente.")))
                     .andExpect(jsonPath("$.path", is("/api/v1/parkings/my")));
 
             verify(parkingService, times(1))

@@ -22,12 +22,17 @@ public class UserController {
     private final UserService userService;
 
     // #19
-    @Operation(summary = "Update current user's location")
+    @Operation(
+            summary = "Update current user's location (DEPRECATED)",
+            description = "DEPRECATED: This endpoint is no longer recommended for use in the primary driver flow. Location is typically passed as query parameters in parking search requests.",
+            deprecated = true
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Location updated successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request")
     })
     @PutMapping("/me/location")
+    @Deprecated(since = "2024-04-23", forRemoval = true)
     public ResponseEntity<Void> updateMyLocation(
             @Valid @RequestBody LocationUpdateRequest request, Authentication authentication
     ) {

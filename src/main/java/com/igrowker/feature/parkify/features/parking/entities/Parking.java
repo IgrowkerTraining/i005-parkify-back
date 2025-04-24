@@ -54,5 +54,9 @@ public class Parking {
     @NotNull
     @Column(name = "owner_id", nullable = false)
     private Long ownerId;
+    @Column(name = "parking_phone")
+    private String parkingPhone;
+    @Column(name = "parking_image_url")
+    private String parkingImageUrl;
 
 }

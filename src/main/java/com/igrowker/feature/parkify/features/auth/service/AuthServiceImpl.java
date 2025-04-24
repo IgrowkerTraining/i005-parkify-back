@@ -1,7 +1,10 @@
 package com.igrowker.feature.parkify.features.auth.service;
 
+import com.igrowker.feature.parkify.exception.EmailAlreadyExistsException;
 import com.igrowker.feature.parkify.features.auth.dto.request.LoginRequest;
 import com.igrowker.feature.parkify.features.auth.dto.request.RegisterRequest;
+import com.igrowker.feature.parkify.features.auth.dto.request.UpdateEmailRequest;
+import com.igrowker.feature.parkify.features.auth.dto.response.LoginResponse;
 import com.igrowker.feature.parkify.features.auth.dto.response.RegisterResponse;
 import com.igrowker.feature.parkify.features.auth.dto.response.UserResponse;
 import com.igrowker.feature.parkify.features.auth.entities.AuthUser;
@@ -30,7 +33,8 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public String login(LoginRequest request) {
+    @Transactional(readOnly = true)
+    public LoginResponse login(LoginRequest request) {
         final UserDetails userDetails = (UserDetails) authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
                                 request.email(),
@@ -38,13 +42,15 @@ public class AuthServiceImpl implements AuthService {
                         )
                 )
                 .getPrincipal();
-        return jwtService.generateToken(userDetails);
+        final String email = userDetails.getUsername();
+        final String token = jwtService.generateToken(userDetails);
+        return new LoginResponse(token, email);
     }
 
     @Override
     public RegisterResponse register(RegisterRequest request) {
         if (authUserRepository.findByEmail(request.email()).isPresent()) {
-            throw new RuntimeException("Email is already in use");
+            throw new EmailAlreadyExistsException("El correo electrónico ya está registrado.");
         }
 
         AuthUser newUser = new AuthUser();
@@ -86,4 +92,19 @@ public class AuthServiceImpl implements AuthService {
                 .contactPhone(authUser.getContactPhone())
                 .build();
     }
+
+    @Override
+    @Transactional
+    public void updateEmail(String currentEmail, String newEmail) {
+        AuthUser user = authUserRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+        if (authUserRepository.findByEmail(newEmail).isPresent()) {
+            throw new EmailAlreadyExistsException("El email ya está en uso");
+        }
+
+        user.setEmail(newEmail);
+        authUserRepository.save(user);
+    }
+
 }

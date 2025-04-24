@@ -5,6 +5,7 @@ import com.igrowker.feature.parkify.features.user.dto.response.PublicUserRespons
 import jakarta.validation.Valid;
 
 public interface UserService {
+    @Deprecated(since = "2024-04-23", forRemoval = true)
     void updateUserLocation(String name, @Valid LocationUpdateRequest request);
 
     PublicUserResponse getPublicUserById(String userId);
