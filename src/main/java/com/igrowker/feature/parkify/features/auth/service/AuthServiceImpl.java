@@ -3,6 +3,7 @@ package com.igrowker.feature.parkify.features.auth.service;
 import com.igrowker.feature.parkify.exception.EmailAlreadyExistsException;
 import com.igrowker.feature.parkify.features.auth.dto.request.LoginRequest;
 import com.igrowker.feature.parkify.features.auth.dto.request.RegisterRequest;
+import com.igrowker.feature.parkify.features.auth.dto.request.UpdateEmailRequest;
 import com.igrowker.feature.parkify.features.auth.dto.response.LoginResponse;
 import com.igrowker.feature.parkify.features.auth.dto.response.RegisterResponse;
 import com.igrowker.feature.parkify.features.auth.dto.response.UserResponse;
@@ -91,4 +92,19 @@ public class AuthServiceImpl implements AuthService {
                 .contactPhone(authUser.getContactPhone())
                 .build();
     }
+
+    @Override
+    @Transactional
+    public void updateEmail(String currentEmail, String newEmail) {
+        AuthUser user = authUserRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
+
+        if (authUserRepository.findByEmail(newEmail).isPresent()) {
+            throw new EmailAlreadyExistsException("El email ya está en uso");
+        }
+
+        user.setEmail(newEmail);
+        authUserRepository.save(user);
+    }
+
 }

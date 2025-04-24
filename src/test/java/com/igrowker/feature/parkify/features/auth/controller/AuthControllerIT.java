@@ -112,4 +112,5 @@ class AuthControllerIT {
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
     }
+
 }
