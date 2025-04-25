@@ -20,7 +20,7 @@ public class WebConfig implements WebMvcConfigurer{
                         //.allowedOrigins("http://34.107.135.109", "http://localhost")
                         .allowedOrigins("*")
                         //.allowedOrigins(frontendUrl)  // Establecer el frontend URL dinámicamente
-                        .allowedOrigins(frontendUrl != null && !frontendUrl.isBlank() ? frontendUrl : "http://localhost:5173")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders("*");
             }
         };
